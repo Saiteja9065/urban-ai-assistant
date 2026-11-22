@@ -31,6 +31,6 @@ describe('Urban Air Quality Assistant Landing Page', () => {
 
     expect(screen.getAllByText(/Urban Air Quality Assistant/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Milestone 4 Online/i)).toBeInTheDocument();
-    expect(screen.getByText(/Select Indian Metropolitan Monitoring Station:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Monitoring Station & Location Finder:/i)).toBeInTheDocument();
   });
 });

@@ -25,12 +25,17 @@ export default function Home() {
   const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Fetch AQI data for the selected station
+  // Fetch AQI data for the selected station or custom location
   const fetchStationAqi = useCallback(async (stationId: string) => {
     setIsLoadingAqi(true);
     setErrorMessage(null);
     try {
-      const res = await fetch(`/api/aqi?station=${encodeURIComponent(stationId)}`);
+      let url = `/api/aqi?station=${encodeURIComponent(stationId)}`;
+      if (stationId.startsWith('geo:')) {
+        const coords = stationId.replace('geo:', '').split(';');
+        url = `/api/aqi?lat=${coords[0]}&lon=${coords[1]}`;
+      }
+      const res = await fetch(url);
       const json = await res.json();
       if (json.success && json.data) {
         setAqiData(json.data);

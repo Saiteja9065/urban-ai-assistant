@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StationAqiData } from '@/types/aqi';
 import { INDIAN_METRO_STATIONS } from '@/lib/aqi-constants';
 import {
@@ -8,9 +8,11 @@ import {
   Thermometer,
   Droplets,
   Wind,
-  AlertOctagon,
-  ShieldAlert,
+  Search,
+  Navigation,
   Info,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 
 interface AqiProvenanceCardProps {
@@ -27,6 +29,45 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
   isLoading,
 }) => {
   const { aqi, category, dominantPollutant, pollutants, weather, provenance, station } = aqiData;
+
+  const [searchInput, setSearchInput] = useState('');
+  const [gpsStatus, setGpsStatus] = useState<string | null>(null);
+  const [isGpsLoading, setIsGpsLoading] = useState(false);
+
+  // Handle browser GPS geolocation
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setGpsStatus('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsGpsLoading(true);
+    setGpsStatus('Accessing device GPS location...');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const geoQuery = `geo:${latitude.toFixed(4)};${longitude.toFixed(4)}`;
+        setGpsStatus(`GPS detected (${latitude.toFixed(2)}°N, ${longitude.toFixed(2)}°E). Locating nearest CPCB station...`);
+        setIsGpsLoading(false);
+        onSelectStation(geoQuery);
+      },
+      (error) => {
+        setIsGpsLoading(false);
+        setGpsStatus(`Location access denied or unavailable: ${error.message}. Please select a city above.`);
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
+
+  // Handle custom city or area search
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = searchInput.trim();
+    if (!query) return;
+    setGpsStatus(`Searching nearest CPCB station for "${query}"...`);
+    onSelectStation(query);
+  };
 
   const getSeverityBadgeStyle = (cat: string) => {
     switch (cat.toLowerCase()) {
@@ -46,43 +87,96 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
     }
   };
 
+  const isCustomOrGps = selectedStationId.startsWith('geo:') || !INDIAN_METRO_STATIONS.some((s) => s.id === selectedStationId);
+
   return (
     <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 sm:p-6 shadow-xl shadow-black/40">
-      {/* Top Station Selector & Hotspot Pills */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+      {/* Top Controls: Location & Search Header */}
+      <div className="mb-6 space-y-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <label htmlFor="station-select" className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-cyan-400" />
-            Select Indian Metropolitan Monitoring Station:
+            Monitoring Station &amp; Location Finder:
           </label>
-          <div className="text-xs text-slate-400">
-            {INDIAN_METRO_STATIONS.length} Stations Available
+
+          {/* GPS Auto-Detect Button */}
+          <button
+            onClick={handleUseMyLocation}
+            disabled={isLoading || isGpsLoading}
+            type="button"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs font-semibold transition-all disabled:opacity-50"
+          >
+            <Navigation className={`h-3.5 w-3.5 ${isGpsLoading ? 'animate-spin' : ''}`} />
+            {isGpsLoading ? 'Locating...' : 'Use My Exact Location (GPS)'}
+          </button>
+        </div>
+
+        {/* Search Bar for Custom Cities / Districts */}
+        <form onSubmit={handleSearchSubmit} className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search any Indian city, neighborhood or district (e.g. Pune, Jaipur, Lucknow, Dwarka, Noida...)"
+              className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-10 pr-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading || !searchInput.trim()}
+            className="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-slate-950 font-bold text-xs rounded-xl transition-all"
+          >
+            Find
+          </button>
+        </form>
+
+        {/* GPS or Search Status Toast */}
+        {gpsStatus && (
+          <div className="p-2.5 rounded-lg bg-slate-950/80 border border-cyan-800/40 text-xs text-cyan-300 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Info className="h-3.5 w-3.5 shrink-0" />
+              {gpsStatus}
+            </span>
+            <button
+              onClick={() => setGpsStatus(null)}
+              className="text-slate-400 hover:text-white text-[11px] ml-2"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Dropdown Selector */}
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+          <div className="sm:col-span-12">
+            <select
+              id="station-select"
+              aria-label="Select Indian Metropolitan Monitoring Station"
+              value={isCustomOrGps ? '' : selectedStationId}
+              onChange={(e) => onSelectStation(e.target.value)}
+              disabled={isLoading}
+              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            >
+              {isCustomOrGps && <option value="">Custom Location: {station.name}</option>}
+              {INDIAN_METRO_STATIONS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.city}: {s.name} ({s.state})
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
-        {/* Dropdown for mobile and quick switching */}
-        <select
-          id="station-select"
-          aria-label="Select Indian Metropolitan Monitoring Station"
-          value={selectedStationId}
-          onChange={(e) => onSelectStation(e.target.value)}
-          disabled={isLoading}
-          className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 mb-3"
-        >
-          {INDIAN_METRO_STATIONS.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.city}: {s.name} ({s.state})
-            </option>
-          ))}
-        </select>
-
         {/* Quick-Preset Chips for Common Smog Hotspots */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className="text-[11px] text-slate-500 font-medium mr-1">Hotspots:</span>
           {INDIAN_METRO_STATIONS.filter((s) => s.isPopularPreset).map((s) => (
             <button
               key={s.id}
               onClick={() => onSelectStation(s.id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+              className={`px-2.5 py-0.5 rounded-lg text-xs font-medium transition-all ${
                 selectedStationId === s.id
                   ? 'bg-cyan-500 text-slate-950 font-semibold shadow-md shadow-cyan-500/20'
                   : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700/60'

@@ -7,7 +7,13 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest): Promise<NextResponse<AqiApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const stationQuery = searchParams.get('station') || searchParams.get('city') || 'delhi-anand-vihar';
+    const lat = searchParams.get('lat');
+    const lon = searchParams.get('lon');
+    let stationQuery = searchParams.get('station') || searchParams.get('city') || 'delhi-anand-vihar';
+
+    if (lat && lon) {
+      stationQuery = `geo:${lat};${lon}`;
+    }
 
     // Support listing all available stations if ?stations=list
     if (searchParams.get('stations') === 'list') {

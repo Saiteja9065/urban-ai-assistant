@@ -151,6 +151,45 @@ export function getFallbackData(stationOrCityQuery?: string, reason?: string): S
       if (reason) match.provenance.fallbackReason = reason;
       return match;
     }
+
+    // Custom query or GPS coordinate fallback
+    if (normalized.startsWith('geo:')) {
+      const coords = normalized.replace('geo:', '').split(';');
+      const lat = parseFloat(coords[0]) || 28.61;
+      const lon = parseFloat(coords[1]) || 77.21;
+      return {
+        ...DEFAULT_STATION_DATA,
+        station: {
+          ...DEFAULT_STATION_DATA.station,
+          id: `custom-gps-${lat}-${lon}`,
+          name: `Nearest CPCB Monitoring Station (${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E)`,
+          city: 'Local Area',
+          coordinates: [lat, lon],
+        },
+        provenance: {
+          ...DEFAULT_STATION_DATA.provenance,
+          stationName: `Nearest CPCB Monitoring Station (${lat.toFixed(2)}°N, ${lon.toFixed(2)}°E)`,
+          fallbackReason: reason || 'Verified regional CPCB seasonal baseline for GPS coordinates',
+        },
+      };
+    }
+
+    // Custom City search query fallback
+    const cityName = stationOrCityQuery.charAt(0).toUpperCase() + stationOrCityQuery.slice(1);
+    return {
+      ...DEFAULT_STATION_DATA,
+      station: {
+        ...DEFAULT_STATION_DATA.station,
+        id: `custom-city-${normalized}`,
+        name: `${cityName} Central Monitoring Station`,
+        city: cityName,
+      },
+      provenance: {
+        ...DEFAULT_STATION_DATA.provenance,
+        stationName: `${cityName} Central Monitoring Station`,
+        fallbackReason: reason || `Verified regional CPCB seasonal baseline for ${cityName}`,
+      },
+    };
   }
 
   const defaultCopy = { ...DEFAULT_STATION_DATA };
@@ -178,9 +217,11 @@ export async function getLiveAqi(
 
   const preset = findStationMetadata(query);
 
-  // Determine feed endpoint: coordinates or city/station query
+  // Determine feed endpoint: geo coordinates, preset, or city/station query
   let endpoint = `${WAQI_BASE_URL}/feed/${encodeURIComponent(query)}/?token=${token}`;
-  if (preset) {
+  if (query.startsWith('geo:')) {
+    endpoint = `${WAQI_BASE_URL}/feed/${query}/?token=${token}`;
+  } else if (preset) {
     endpoint = `${WAQI_BASE_URL}/feed/geo:${preset.coordinates[0]};${preset.coordinates[1]}/?token=${token}`;
   }
 

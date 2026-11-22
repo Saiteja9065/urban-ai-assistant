@@ -60,6 +60,37 @@ describe('Dashboard UI Components (Milestone 4)', () => {
       fireEvent.change(select, { target: { value: 'mumbai-bkc' } });
       expect(handleSelectStation).toHaveBeenCalledWith('mumbai-bkc');
     });
+
+    it('supports searching a custom city or neighborhood', () => {
+      const handleSelectStation = vi.fn();
+      render(
+        <AqiProvenanceCard
+          aqiData={DEFAULT_STATION_DATA}
+          selectedStationId="delhi-anand-vihar"
+          onSelectStation={handleSelectStation}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText(/Search any Indian city/i);
+      fireEvent.change(searchInput, { target: { value: 'Pune' } });
+      const findBtn = screen.getByRole('button', { name: /find/i });
+      fireEvent.click(findBtn);
+
+      expect(handleSelectStation).toHaveBeenCalledWith('Pune');
+    });
+
+    it('renders the GPS location detection button', () => {
+      const handleSelectStation = vi.fn();
+      render(
+        <AqiProvenanceCard
+          aqiData={DEFAULT_STATION_DATA}
+          selectedStationId="delhi-anand-vihar"
+          onSelectStation={handleSelectStation}
+        />
+      );
+
+      expect(screen.getByRole('button', { name: /Use My Exact Location/i })).toBeInTheDocument();
+    });
   });
 
   describe('PersonaSelector Component', () => {
