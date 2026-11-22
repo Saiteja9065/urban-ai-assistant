@@ -103,10 +103,10 @@ describe('Dashboard UI Components (Milestone 4)', () => {
         />
       );
 
-      expect(screen.getByText(/Daily Office Commuter/i)).toBeInTheDocument();
-      expect(screen.getByText(/Parent of a Toddler/i)).toBeInTheDocument();
-      expect(screen.getByText(/Senior Citizen with Asthma/i)).toBeInTheDocument();
-      expect(screen.getByText(/Student \/ School Athlete/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/Daily Office Commuter/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Parent of a Toddler/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Senior Citizen with Asthma/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Student \/ School Athlete/i).length).toBeGreaterThan(0);
     });
 
     it('calls onSelectPersona when a preset card is clicked', () => {
@@ -118,7 +118,7 @@ describe('Dashboard UI Components (Milestone 4)', () => {
         />
       );
 
-      const seniorCard = screen.getByText(/Senior Citizen with Asthma/i);
+      const seniorCard = screen.getAllByText(/Senior Citizen with Asthma/i)[0];
       fireEvent.click(seniorCard);
       expect(handleSelectPersona).toHaveBeenCalledWith('senior');
     });

@@ -35,24 +35,28 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
       data: EVALUATOR_PERSONA_PRESETS.commuter,
       icon: Briefcase,
       badgeColor: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+      ageBracket: 'Age 25–30',
     },
     {
       id: 'parent' as PersonaPresetId,
       data: EVALUATOR_PERSONA_PRESETS.parent,
       icon: Baby,
       badgeColor: 'border-pink-500/30 bg-pink-500/10 text-pink-400',
+      ageBracket: 'Age 28–40',
     },
     {
       id: 'senior' as PersonaPresetId,
       data: EVALUATOR_PERSONA_PRESETS.senior,
       icon: HeartPulse,
       badgeColor: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
+      ageBracket: 'Age 65+',
     },
     {
       id: 'athlete' as PersonaPresetId,
       data: EVALUATOR_PERSONA_PRESETS.athlete,
       icon: Trophy,
       badgeColor: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
+      ageBracket: 'Age 14–18',
     },
   ];
 
@@ -100,7 +104,7 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
 
       {/* Preset Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {presets.map(({ id, data, icon: Icon, badgeColor }) => {
+        {presets.map(({ id, data, icon: Icon, badgeColor, ageBracket }) => {
           const isSelected = selectedPersonaId === id;
           return (
             <button
@@ -125,7 +129,7 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                     <Icon className="h-4 w-4" />
                   </div>
                   <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${badgeColor}`}>
-                    Age {data.age}
+                    {ageBracket}
                   </span>
                 </div>
 

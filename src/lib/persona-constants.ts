@@ -3,11 +3,12 @@ import { PersonaPresetId, UserProfile } from '@/types/persona';
 /**
  * Mandatory Pre-Configured Presets for Instant Evaluator Testing
  * Matches Section 3 of Master Project Brief
+ * Configured as Demographic Archetypes with clear Age Brackets
  */
 export const EVALUATOR_PERSONA_PRESETS: Record<Exclude<PersonaPresetId, 'custom'>, UserProfile> = {
   commuter: {
     id: 'commuter',
-    name: 'Aarav Sharma',
+    name: 'Daily Office Commuter (Age 25–30)',
     role: 'Daily Office Commuter',
     age: 28,
     locationContext: 'Resides in Noida, commutes 18 km each way to Cyber City Gurgaon',
@@ -20,12 +21,12 @@ export const EVALUATOR_PERSONA_PRESETS: Record<Exclude<PersonaPresetId, 'custom'
       'Metro vs 2-wheeler road route trade-off',
       'Vehicle cabin air recirculation & N95/FFP2 mask protocols',
     ],
-    description: '28-year-old traveling 18 km each way. Needs commute departure timing, metro vs road routes, cabin recirculation, and N95 masking.',
+    description: 'Working professional traveling 18 km each way. Needs commute departure timing, metro vs road routes, cabin recirculation, and N95 masking.',
   },
 
   parent: {
     id: 'parent',
-    name: 'Priya & Baby Kabir',
+    name: 'Parent of a Toddler (Age 28–40)',
     role: 'Parent of a Toddler',
     age: 31,
     locationContext: 'High-rise apartment in Greater Kailash, New Delhi',
@@ -39,12 +40,12 @@ export const EVALUATOR_PERSONA_PRESETS: Record<Exclude<PersonaPresetId, 'custom'
       'Brief mid-day ventilation windows when smog lifts',
       'Pediatric vulnerability warnings',
     ],
-    description: 'Mother with a 3-year-old child in an apartment. Needs playground safety thresholds, nursery purification, ventilation hours, and pediatric vulnerability warnings.',
+    description: 'Parent with a 3-year-old child in an apartment. Needs playground safety thresholds, nursery purification, ventilation hours, and pediatric vulnerability warnings.',
   },
 
   senior: {
     id: 'senior',
-    name: 'Dr. Ramesh Chandra',
+    name: 'Senior Citizen with Asthma (Age 65+)',
     role: 'Senior Citizen with Asthma',
     age: 68,
     locationContext: 'Indirapuram, Ghaziabad / Delhi NCR',
@@ -58,12 +59,12 @@ export const EVALUATOR_PERSONA_PRESETS: Record<Exclude<PersonaPresetId, 'custom'
       'Immediate particulate avoidance during winter morning inversions',
       'Emergency inhaler readiness protocols',
     ],
-    description: '68-year-old retiree with mild respiratory vulnerability. Needs shifting morning walks indoors, oxygenation routines, and strict particulate avoidance.',
+    description: 'Senior citizen retiree with mild respiratory vulnerability. Needs shifting morning walks indoors, oxygenation routines, and strict particulate avoidance.',
   },
 
   athlete: {
     id: 'athlete',
-    name: 'Rohan Verma',
+    name: 'Student / School Athlete (Age 14–18)',
     role: 'Student / School Athlete',
     age: 15,
     locationContext: 'Central Kolkata near Maidan',
@@ -76,13 +77,13 @@ export const EVALUATOR_PERSONA_PRESETS: Record<Exclude<PersonaPresetId, 'custom'
       'Travel masking between school and home',
       'Hydration and antioxidant protocols to counter oxidative lung stress',
     ],
-    description: '15-year-old with mandatory 4:00 PM outdoor sports practice. Needs indoor sports relocation, travel masking, and hydration protocols.',
+    description: 'High school student with mandatory 4:00 PM outdoor sports practice. Needs indoor sports relocation, travel masking, and hydration protocols.',
   },
 };
 
 export const DEFAULT_CUSTOM_PERSONA: UserProfile = {
   id: 'custom',
-  name: 'Custom Citizen',
+  name: 'Custom Citizen Profile',
   role: 'Urban Resident',
   age: 35,
   locationContext: 'Indian Metropolitan City',

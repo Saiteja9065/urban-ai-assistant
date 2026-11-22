@@ -248,6 +248,158 @@ export const INDIAN_METRO_STATIONS: StationMetadata[] = [
     cpcbCode: 'TG005',
     isPopularPreset: false,
   },
+
+  // Pune
+  {
+    id: 'pune-karve',
+    name: 'Karve Road, Pune',
+    city: 'Pune',
+    state: 'Maharashtra',
+    country: 'India',
+    coordinates: [18.508, 73.834],
+    cpcbCode: 'PN001',
+    isPopularPreset: false,
+  },
+  {
+    id: 'pune-shivajinagar',
+    name: 'Shivaji Nagar, Pune',
+    city: 'Pune',
+    state: 'Maharashtra',
+    country: 'India',
+    coordinates: [18.531, 73.844],
+    cpcbCode: 'PN002',
+    isPopularPreset: false,
+  },
+  {
+    id: 'pune-bhosari',
+    name: 'Bhosari Industrial Area, Pune',
+    city: 'Pune',
+    state: 'Maharashtra',
+    country: 'India',
+    coordinates: [18.627, 73.846],
+    cpcbCode: 'PN003',
+    isPopularPreset: false,
+  },
+
+  // Lucknow (Indo-Gangetic Smog Hub)
+  {
+    id: 'lucknow-lalbagh',
+    name: 'Lalbagh, Lucknow',
+    city: 'Lucknow',
+    state: 'Uttar Pradesh',
+    country: 'India',
+    coordinates: [26.848, 80.938],
+    cpcbCode: 'LK001',
+    isPopularPreset: false,
+  },
+  {
+    id: 'lucknow-gomtinagar',
+    name: 'Gomti Nagar, Lucknow',
+    city: 'Lucknow',
+    state: 'Uttar Pradesh',
+    country: 'India',
+    coordinates: [26.852, 80.999],
+    cpcbCode: 'LK002',
+    isPopularPreset: false,
+  },
+  {
+    id: 'lucknow-talkatora',
+    name: 'Talkatora District, Lucknow',
+    city: 'Lucknow',
+    state: 'Uttar Pradesh',
+    country: 'India',
+    coordinates: [26.833, 80.897],
+    cpcbCode: 'LK003',
+    isPopularPreset: false,
+  },
+
+  // Jaipur
+  {
+    id: 'jaipur-shastri',
+    name: 'Shastri Nagar, Jaipur',
+    city: 'Jaipur',
+    state: 'Rajasthan',
+    country: 'India',
+    coordinates: [26.945, 75.802],
+    cpcbCode: 'JP001',
+    isPopularPreset: false,
+  },
+  {
+    id: 'jaipur-ajmeri',
+    name: 'Ajmeri Gate, Jaipur',
+    city: 'Jaipur',
+    state: 'Rajasthan',
+    country: 'India',
+    coordinates: [26.918, 75.819],
+    cpcbCode: 'JP002',
+    isPopularPreset: false,
+  },
+
+  // Ahmedabad
+  {
+    id: 'ahmedabad-maninagar',
+    name: 'Maninagar, Ahmedabad',
+    city: 'Ahmedabad',
+    state: 'Gujarat',
+    country: 'India',
+    coordinates: [22.997, 72.603],
+    cpcbCode: 'GJ001',
+    isPopularPreset: false,
+  },
+  {
+    id: 'ahmedabad-chandkheda',
+    name: 'Chandkheda, Ahmedabad',
+    city: 'Ahmedabad',
+    state: 'Gujarat',
+    country: 'India',
+    coordinates: [23.111, 72.583],
+    cpcbCode: 'GJ002',
+    isPopularPreset: false,
+  },
+
+  // Patna (Severe Winter Smog Hotspot)
+  {
+    id: 'patna-muradpur',
+    name: 'Muradpur, Patna',
+    city: 'Patna',
+    state: 'Bihar',
+    country: 'India',
+    coordinates: [25.621, 85.166],
+    cpcbCode: 'BR001',
+    isPopularPreset: false,
+  },
+  {
+    id: 'patna-samanpura',
+    name: 'Samanpura, Patna',
+    city: 'Patna',
+    state: 'Bihar',
+    country: 'India',
+    coordinates: [25.608, 85.088],
+    cpcbCode: 'BR002',
+    isPopularPreset: false,
+  },
+
+  // Chandigarh
+  {
+    id: 'chandigarh-sector22',
+    name: 'Sector 22, Chandigarh',
+    city: 'Chandigarh',
+    state: 'Chandigarh',
+    country: 'India',
+    coordinates: [30.733, 76.772],
+    cpcbCode: 'CH001',
+    isPopularPreset: false,
+  },
+  {
+    id: 'chandigarh-sector25',
+    name: 'Panjab University, Sector 25, Chandigarh',
+    city: 'Chandigarh',
+    state: 'Chandigarh',
+    country: 'India',
+    coordinates: [30.749, 76.758],
+    cpcbCode: 'CH002',
+    isPopularPreset: false,
+  },
 ];
 
 export interface MetroRegion {
@@ -264,6 +416,12 @@ export const METRO_REGIONS: MetroRegion[] = [
   { id: 'bengaluru', name: 'Bengaluru', defaultStationId: 'bengaluru-btm', matchKeys: ['bengaluru', 'bangalore'] },
   { id: 'kolkata', name: 'Kolkata', defaultStationId: 'kolkata-victoria', matchKeys: ['kolkata', 'howrah'] },
   { id: 'chennai', name: 'Chennai', defaultStationId: 'chennai-alandur', matchKeys: ['chennai'] },
+  { id: 'pune', name: 'Pune', defaultStationId: 'pune-karve', matchKeys: ['pune', 'pcmc', 'bhosari'] },
+  { id: 'lucknow', name: 'Lucknow', defaultStationId: 'lucknow-lalbagh', matchKeys: ['lucknow'] },
+  { id: 'jaipur', name: 'Jaipur', defaultStationId: 'jaipur-shastri', matchKeys: ['jaipur'] },
+  { id: 'ahmedabad', name: 'Ahmedabad', defaultStationId: 'ahmedabad-maninagar', matchKeys: ['ahmedabad'] },
+  { id: 'patna', name: 'Patna', defaultStationId: 'patna-muradpur', matchKeys: ['patna'] },
+  { id: 'chandigarh', name: 'Chandigarh', defaultStationId: 'chandigarh-sector22', matchKeys: ['chandigarh'] },
 ];
 
 /**
