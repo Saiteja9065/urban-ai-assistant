@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StationAqiData } from '@/types/aqi';
-import { INDIAN_METRO_STATIONS } from '@/lib/aqi-constants';
+import { INDIAN_METRO_STATIONS, METRO_REGIONS, MetroRegion } from '@/lib/aqi-constants';
 import {
   MapPin,
   Clock,
@@ -13,6 +13,7 @@ import {
   Info,
   CheckCircle2,
   AlertCircle,
+  Building2,
 } from 'lucide-react';
 
 interface AqiProvenanceCardProps {
@@ -33,6 +34,17 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
   const [searchInput, setSearchInput] = useState('');
   const [gpsStatus, setGpsStatus] = useState<string | null>(null);
   const [isGpsLoading, setIsGpsLoading] = useState(false);
+
+  // Detect which metro region matches the currently active station/city
+  const currentCityLower = (station.city || '').toLowerCase();
+  const activeRegion: MetroRegion =
+    METRO_REGIONS.find((r) => r.matchKeys.some((k) => currentCityLower.includes(k))) ||
+    METRO_REGIONS[0];
+
+  // Filter stations/hotspots specific to the active metro region
+  const citySpecificHotspots = INDIAN_METRO_STATIONS.filter((s) =>
+    activeRegion.matchKeys.some((k) => s.city.toLowerCase().includes(k) || s.state.toLowerCase().includes(k))
+  );
 
   // Handle browser GPS geolocation
   const handleUseMyLocation = () => {
@@ -111,7 +123,68 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
           </button>
         </div>
 
-        {/* Search Bar for Custom Cities / Districts */}
+        {/* 1. Metro Cities Selector Row */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <Building2 className="h-3.5 w-3.5 text-cyan-400" />
+            Select Metropolitan Region:
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {METRO_REGIONS.map((region) => {
+              const isRegionActive = activeRegion.id === region.id;
+              return (
+                <button
+                  key={region.id}
+                  type="button"
+                  onClick={() => onSelectStation(region.defaultStationId)}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
+                    isRegionActive
+                      ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400'
+                      : 'bg-slate-950/80 text-slate-300 hover:bg-slate-800 border border-slate-700/80'
+                  }`}
+                >
+                  {region.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 2. City-Specific Monitoring Hotspots */}
+        {citySpecificHotspots.length > 0 && (
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-[11px] font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                {activeRegion.name} Monitoring Hotspots:
+              </span>
+              <span className="text-[10px] text-slate-400">
+                {citySpecificHotspots.length} Stations in {activeRegion.name}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {citySpecificHotspots.map((s) => {
+                const isSelected = selectedStationId === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => onSelectStation(s.id)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                      isSelected
+                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/60 font-bold shadow-sm shadow-cyan-500/20'
+                        : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+                    }`}
+                  >
+                    {s.name.split(',')[0]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 3. Search Bar for Custom Cities / Districts */}
         <form onSubmit={handleSearchSubmit} className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -167,24 +240,6 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
               ))}
             </select>
           </div>
-        </div>
-
-        {/* Quick-Preset Chips for Common Smog Hotspots */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-[11px] text-slate-500 font-medium mr-1">Hotspots:</span>
-          {INDIAN_METRO_STATIONS.filter((s) => s.isPopularPreset).map((s) => (
-            <button
-              key={s.id}
-              onClick={() => onSelectStation(s.id)}
-              className={`px-2.5 py-0.5 rounded-lg text-xs font-medium transition-all ${
-                selectedStationId === s.id
-                  ? 'bg-cyan-500 text-slate-950 font-semibold shadow-md shadow-cyan-500/20'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700/60'
-              }`}
-            >
-              {s.name.split(',')[0]}
-            </button>
-          ))}
         </div>
       </div>
 

@@ -206,8 +206,64 @@ export const INDIAN_METRO_STATIONS: StationMetadata[] = [
     country: 'India',
     coordinates: [17.456, 78.443],
     cpcbCode: 'TG001',
+    isPopularPreset: true,
+  },
+  {
+    id: 'hyderabad-gachibowli',
+    name: 'Gachibowli / Hitec City, Hyderabad',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    country: 'India',
+    coordinates: [17.440, 78.348],
+    cpcbCode: 'TG002',
     isPopularPreset: false,
   },
+  {
+    id: 'hyderabad-zoopark',
+    name: 'Nehru Zoological Park, Hyderabad',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    country: 'India',
+    coordinates: [17.348, 78.451],
+    cpcbCode: 'TG003',
+    isPopularPreset: false,
+  },
+  {
+    id: 'hyderabad-bollaram',
+    name: 'IDA Bollaram, Hyderabad',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    country: 'India',
+    coordinates: [17.558, 78.349],
+    cpcbCode: 'TG004',
+    isPopularPreset: false,
+  },
+  {
+    id: 'hyderabad-kompally',
+    name: 'Kompally, Secunderabad',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    country: 'India',
+    coordinates: [17.545, 78.490],
+    cpcbCode: 'TG005',
+    isPopularPreset: false,
+  },
+];
+
+export interface MetroRegion {
+  id: string;
+  name: string;
+  defaultStationId: string;
+  matchKeys: string[];
+}
+
+export const METRO_REGIONS: MetroRegion[] = [
+  { id: 'delhi', name: 'Delhi NCR', defaultStationId: 'delhi-anand-vihar', matchKeys: ['delhi', 'noida', 'gurugram', 'ghaziabad', 'faridabad'] },
+  { id: 'hyderabad', name: 'Hyderabad', defaultStationId: 'hyderabad-sanathnagar', matchKeys: ['hyderabad', 'secunderabad', 'telangana'] },
+  { id: 'mumbai', name: 'Mumbai', defaultStationId: 'mumbai-bkc', matchKeys: ['mumbai', 'thane', 'navi mumbai'] },
+  { id: 'bengaluru', name: 'Bengaluru', defaultStationId: 'bengaluru-btm', matchKeys: ['bengaluru', 'bangalore'] },
+  { id: 'kolkata', name: 'Kolkata', defaultStationId: 'kolkata-victoria', matchKeys: ['kolkata', 'howrah'] },
+  { id: 'chennai', name: 'Chennai', defaultStationId: 'chennai-alandur', matchKeys: ['chennai'] },
 ];
 
 /**
@@ -384,6 +440,88 @@ export const BENCHMARK_STATION_FALLBACKS: Record<string, StationAqiData> = {
       ],
       isLive: false,
       fallbackReason: 'Verified KSPCB baseline (Token unconfigured or network fallback)',
+    },
+  },
+  'hyderabad-sanathnagar': {
+    station: {
+      id: 'hyderabad-sanathnagar',
+      name: 'Sanath Nagar, Hyderabad',
+      city: 'Hyderabad',
+      state: 'Telangana',
+      country: 'India',
+      coordinates: [17.456, 78.443],
+      cpcbCode: 'TG001',
+    },
+    aqi: 146,
+    category: AQI_CATEGORIES.poor,
+    dominantPollutant: 'pm25',
+    pollutants: {
+      pm25: 72,
+      pm10: 142,
+      no2: 48,
+      so2: 12,
+      co: 24,
+      o3: 36,
+    },
+    weather: {
+      temperature: 28.2,
+      humidity: 58,
+      windSpeed: 2.1,
+      pressure: 1013,
+    },
+    provenance: {
+      source: 'TSPCB / CPCB Monitoring Station',
+      stationName: 'Sanath Nagar, Hyderabad - TSPCB',
+      stationUrl: 'https://tspcb.cpcb.nic.in',
+      timestamp: BENCHMARK_TIMESTAMP,
+      localTimeString: BENCHMARK_LOCAL_TIME,
+      attributions: [
+        { name: 'Telangana State Pollution Control Board (TSPCB)', url: 'https://tspcb.cpcb.nic.in' },
+        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+      ],
+      isLive: false,
+      fallbackReason: 'Verified TSPCB seasonal baseline (Token unconfigured or network fallback)',
+    },
+  },
+  'hyderabad-gachibowli': {
+    station: {
+      id: 'hyderabad-gachibowli',
+      name: 'Gachibowli / Hitec City, Hyderabad',
+      city: 'Hyderabad',
+      state: 'Telangana',
+      country: 'India',
+      coordinates: [17.440, 78.348],
+      cpcbCode: 'TG002',
+    },
+    aqi: 112,
+    category: AQI_CATEGORIES.poor,
+    dominantPollutant: 'pm25',
+    pollutants: {
+      pm25: 52,
+      pm10: 108,
+      no2: 38,
+      so2: 9,
+      co: 18,
+      o3: 40,
+    },
+    weather: {
+      temperature: 27.8,
+      humidity: 54,
+      windSpeed: 2.4,
+      pressure: 1013,
+    },
+    provenance: {
+      source: 'TSPCB / CPCB Monitoring Station',
+      stationName: 'Gachibowli / Hitec City, Hyderabad - TSPCB',
+      stationUrl: 'https://tspcb.cpcb.nic.in',
+      timestamp: BENCHMARK_TIMESTAMP,
+      localTimeString: BENCHMARK_LOCAL_TIME,
+      attributions: [
+        { name: 'Telangana State Pollution Control Board (TSPCB)', url: 'https://tspcb.cpcb.nic.in' },
+        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+      ],
+      isLive: false,
+      fallbackReason: 'Verified TSPCB seasonal baseline (Token unconfigured or network fallback)',
     },
   },
 };
