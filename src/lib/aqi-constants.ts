@@ -211,6 +211,12 @@ export const INDIAN_METRO_STATIONS: StationMetadata[] = [
 ];
 
 /**
+ * Static baseline timestamp for deterministic SSR hydration
+ */
+export const BENCHMARK_TIMESTAMP = '2026-11-22T06:00:00+05:30';
+export const BENCHMARK_LOCAL_TIME = '22/11/2026, 06:00:00 AM IST';
+
+/**
  * Verified Ground-Truth Benchmark Snapshots for Indian Stations.
  * Used when WAQI_API_TOKEN is not configured or live network is unavailable,
  * ensuring flawless evaluator testing without synthetic hallucinations.
@@ -239,8 +245,8 @@ export const BENCHMARK_STATION_FALLBACKS: Record<string, StationAqiData> = {
       source: 'CPCB / DPCC Monitoring Station',
       stationName: 'Anand Vihar, Delhi - DPCC',
       stationUrl: 'https://cpcb.nic.in',
-      timestamp: new Date().toISOString(),
-      localTimeString: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      timestamp: BENCHMARK_TIMESTAMP,
+      localTimeString: BENCHMARK_LOCAL_TIME,
       attributions: [
         { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
         { name: 'Delhi Pollution Control Committee (DPCC)', url: 'https://dpcc.delhigovt.nic.in' },
@@ -272,8 +278,8 @@ export const BENCHMARK_STATION_FALLBACKS: Record<string, StationAqiData> = {
       source: 'CPCB / DPCC Monitoring Station',
       stationName: 'ITO, Central Delhi - CPCB',
       stationUrl: 'https://cpcb.nic.in',
-      timestamp: new Date().toISOString(),
-      localTimeString: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      timestamp: BENCHMARK_TIMESTAMP,
+      localTimeString: BENCHMARK_LOCAL_TIME,
       attributions: [
         { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
       ],
@@ -304,8 +310,8 @@ export const BENCHMARK_STATION_FALLBACKS: Record<string, StationAqiData> = {
       source: 'MPCB / CPCB Monitoring Station',
       stationName: 'Bandra Kurla Complex (BKC), Mumbai - MPCB',
       stationUrl: 'https://mpcb.gov.in',
-      timestamp: new Date().toISOString(),
-      localTimeString: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      timestamp: BENCHMARK_TIMESTAMP,
+      localTimeString: BENCHMARK_LOCAL_TIME,
       attributions: [
         { name: 'Maharashtra Pollution Control Board (MPCB)', url: 'https://mpcb.gov.in' },
         { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
@@ -337,8 +343,8 @@ export const BENCHMARK_STATION_FALLBACKS: Record<string, StationAqiData> = {
       source: 'WBPCB / CPCB Monitoring Station',
       stationName: 'Victoria Memorial, Kolkata - WBPCB',
       stationUrl: 'https://wbpcb.gov.in',
-      timestamp: new Date().toISOString(),
-      localTimeString: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      timestamp: BENCHMARK_TIMESTAMP,
+      localTimeString: BENCHMARK_LOCAL_TIME,
       attributions: [
         { name: 'West Bengal Pollution Control Board (WBPCB)', url: 'https://wbpcb.gov.in' },
         { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
@@ -370,8 +376,8 @@ export const BENCHMARK_STATION_FALLBACKS: Record<string, StationAqiData> = {
       source: 'KSPCB / CPCB Monitoring Station',
       stationName: 'BTM Layout, Bengaluru - KSPCB',
       stationUrl: 'https://kspcb.karnataka.gov.in',
-      timestamp: new Date().toISOString(),
-      localTimeString: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      timestamp: BENCHMARK_TIMESTAMP,
+      localTimeString: BENCHMARK_LOCAL_TIME,
       attributions: [
         { name: 'Karnataka State Pollution Control Board (KSPCB)', url: 'https://kspcb.karnataka.gov.in' },
         { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },

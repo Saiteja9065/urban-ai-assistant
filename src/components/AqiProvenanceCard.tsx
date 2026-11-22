@@ -292,7 +292,7 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
           </div>
           <div>
             <span className="text-slate-500 block">Verified Observation Time:</span>
-            <span className="font-medium text-white">{provenance.localTimeString}</span>
+            <span suppressHydrationWarning className="font-medium text-white">{provenance.localTimeString}</span>
           </div>
         </div>
 
