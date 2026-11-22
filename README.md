@@ -5,8 +5,15 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.0%20Flash-8E75C2?style=for-the-badge&logo=google)](https://ai.google.dev/)
+[![Live App](https://img.shields.io/badge/Live%20App-urban--ai--assist.vercel.app-00DC82?style=for-the-badge&logo=vercel)](https://urban-ai-assist.vercel.app/)
 [![Tests Passing](https://img.shields.io/badge/Vitest-29%20Passing-success?style=for-the-badge&logo=vitest)](https://vitest.dev/)
 [![ESLint](https://img.shields.io/badge/ESLint-Strict%20Clean-4B32C3?style=for-the-badge&logo=eslint)](https://eslint.org/)
+
+---
+
+## 🌐 Live Production Application
+👉 **Public Live URL:** [https://urban-ai-assist.vercel.app/](https://urban-ai-assist.vercel.app/)  
+👉 **Source Code Repository:** [https://github.com/Saiteja9065/urban-ai-assistant](https://github.com/Saiteja9065/urban-ai-assistant)
 
 ---
 
