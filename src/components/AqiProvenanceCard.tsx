@@ -226,7 +226,7 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
           <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
             <span className="text-[11px] font-medium text-slate-400 block">PM2.5</span>
             <span className="text-base font-bold text-rose-400">
-              {pollutants.pm25 !== undefined ? `${pollutants.pm25} µg/m³` : 'N/A'}
+              {pollutants.pm25 !== undefined ? `${Math.round(pollutants.pm25)} µg/m³` : 'N/A'}
             </span>
             <span className="text-[10px] text-slate-500 block">Fine respirable</span>
           </div>
@@ -234,7 +234,7 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
           <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
             <span className="text-[11px] font-medium text-slate-400 block">PM10</span>
             <span className="text-base font-bold text-amber-400">
-              {pollutants.pm10 !== undefined ? `${pollutants.pm10} µg/m³` : 'N/A'}
+              {pollutants.pm10 !== undefined ? `${Math.round(pollutants.pm10)} µg/m³` : 'N/A'}
             </span>
             <span className="text-[10px] text-slate-500 block">Coarse dust</span>
           </div>
@@ -243,7 +243,11 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
             <span className="text-[11px] font-medium text-slate-400 block">Temperature</span>
             <div className="flex items-center gap-1 text-base font-bold text-slate-200">
               <Thermometer className="h-3.5 w-3.5 text-cyan-400" />
-              <span>{weather?.temperature !== undefined ? `${weather.temperature}°C` : '18°C'}</span>
+              <span>
+                {weather?.temperature !== undefined
+                  ? `${Math.round(weather.temperature * 10) / 10}°C`
+                  : '18°C'}
+              </span>
             </div>
             <span className="text-[10px] text-slate-500 block">Ambient</span>
           </div>
@@ -252,7 +256,11 @@ export const AqiProvenanceCard: React.FC<AqiProvenanceCardProps> = ({
             <span className="text-[11px] font-medium text-slate-400 block">Humidity</span>
             <div className="flex items-center gap-1 text-base font-bold text-slate-200">
               <Droplets className="h-3.5 w-3.5 text-blue-400" />
-              <span>{weather?.humidity !== undefined ? `${weather.humidity}%` : '78%'}</span>
+              <span>
+                {weather?.humidity !== undefined
+                  ? `${Math.round(weather.humidity)}%`
+                  : '78%'}
+              </span>
             </div>
             <span className="text-[10px] text-slate-500 block">Relative</span>
           </div>
