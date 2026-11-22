@@ -1,152 +1,181 @@
-import React from 'react';
-import { Wind, ShieldCheck, Activity, MapPin, Sparkles, AlertTriangle, ArrowRight } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Header } from '@/components/Header';
+import { AqiProvenanceCard } from '@/components/AqiProvenanceCard';
+import { PersonaSelector } from '@/components/PersonaSelector';
+import { AssistantAdvicePanel } from '@/components/AssistantAdvicePanel';
+import { StationAqiData } from '@/types/aqi';
+import { PersonaPresetId, UserProfile } from '@/types/persona';
+import { AssistantAdvice } from '@/types/assistant';
+import { DEFAULT_STATION_DATA } from '@/lib/aqi-constants';
+import { EVALUATOR_PERSONA_PRESETS } from '@/lib/persona-constants';
+import { generateDeterministicAdvice } from '@/lib/gemini-service';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function Home() {
+  const [selectedStationId, setSelectedStationId] = useState<string>('delhi-anand-vihar');
+  const [aqiData, setAqiData] = useState<StationAqiData>(DEFAULT_STATION_DATA);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<PersonaPresetId>('commuter');
+  const [customPersona, setCustomPersona] = useState<Partial<UserProfile> | undefined>();
+  const [advice, setAdvice] = useState<AssistantAdvice>(
+    generateDeterministicAdvice(DEFAULT_STATION_DATA, EVALUATOR_PERSONA_PRESETS.commuter)
+  );
+  const [isLoadingAqi, setIsLoadingAqi] = useState<boolean>(false);
+  const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Fetch AQI data for the selected station
+  const fetchStationAqi = useCallback(async (stationId: string) => {
+    setIsLoadingAqi(true);
+    setErrorMessage(null);
+    try {
+      const res = await fetch(`/api/aqi?station=${encodeURIComponent(stationId)}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        setAqiData(json.data);
+      } else {
+        throw new Error(json.error || 'Failed to retrieve AQI data');
+      }
+    } catch (err: unknown) {
+      console.warn('AQI fetch fallback triggered:', err);
+    } finally {
+      setIsLoadingAqi(false);
+    }
+  }, []);
+
+  // Fetch AI guidance from /api/assistant
+  const fetchAdvice = useCallback(
+    async (currentAqi: StationAqiData, personaId: PersonaPresetId, custom?: Partial<UserProfile>) => {
+      setIsLoadingAi(true);
+      try {
+        const res = await fetch('/api/assistant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stationQuery: currentAqi.station.id,
+            aqiData: currentAqi,
+            personaId,
+            customPersona: custom,
+          }),
+        });
+
+        const json = await res.json();
+        if (json.success && json.data) {
+          setAdvice(json.data);
+        } else {
+          throw new Error(json.error || 'Assistant API failure');
+        }
+      } catch (err: unknown) {
+        console.warn('Assistant fetch fallback triggered:', err);
+        const resolvedPersona =
+          personaId !== 'custom'
+            ? EVALUATOR_PERSONA_PRESETS[personaId as Exclude<PersonaPresetId, 'custom'>]
+            : ({ ...EVALUATOR_PERSONA_PRESETS.commuter, ...(custom || {}), id: 'custom' } as UserProfile);
+        setAdvice(generateDeterministicAdvice(currentAqi, resolvedPersona));
+      } finally {
+        setIsLoadingAi(false);
+      }
+    },
+    []
+  );
+
+  // Station selection handler
+  const handleSelectStation = (stationId: string) => {
+    setSelectedStationId(stationId);
+    fetchStationAqi(stationId);
+  };
+
+  // Persona selection handler
+  const handleSelectPersona = (personaId: PersonaPresetId, customData?: Partial<UserProfile>) => {
+    setSelectedPersonaId(personaId);
+    if (customData) setCustomPersona(customData);
+    fetchAdvice(aqiData, personaId, customData || customPersona);
+  };
+
+  // Refresh all data
+  const handleRefresh = () => {
+    fetchStationAqi(selectedStationId);
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchStationAqi(selectedStationId);
+  }, [fetchStationAqi, selectedStationId]);
+
+  // When aqiData changes, refresh advice
+  useEffect(() => {
+    fetchAdvice(aqiData, selectedPersonaId, customPersona);
+  }, [aqiData, selectedPersonaId, customPersona, fetchAdvice]);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      {/* Header */}
-      <header className="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-sm shadow-cyan-500/20">
-              <Wind className="h-5 w-5" />
-            </div>
+      <Header
+        onRefresh={handleRefresh}
+        isLoading={isLoadingAqi}
+        isAiLoading={isLoadingAi}
+      />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Evaluator Quick Overview Banner */}
+        <div className="rounded-2xl bg-gradient-to-r from-cyan-950/40 via-blue-950/30 to-purple-950/40 border border-cyan-800/50 p-5 sm:p-6 shadow-xl">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                Urban Air Quality Assistant
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-xs font-semibold mb-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-cyan-400" />
+                PromptWars Virtual Challenge 6 Prototype
+              </div>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-white">
+                Urban Air Quality Assistant &amp; Smog Navigation System
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl leading-relaxed">
+                Combining real-time CPCB monitoring stations with demographic personas. Generating
+                contextual low-emission commute routes, indoor air quality schedules, and sustainable alternatives with explicit health and ecological justifications.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs font-mono px-3 py-1 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg">
+                Milestone 4 Online
               </span>
-              <span className="hidden sm:inline-block ml-2 px-2 py-0.5 text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full">
-                India Winter Smog Response
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3 text-sm text-slate-400">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-medium">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Milestone 1 Online
-            </span>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-medium mb-4">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>PromptWars Challenge 6: GenAI Operational Smog Assistant</span>
-          </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
-            Actionable Smog Intelligence for Indian Metros
-          </h1>
-          <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
-            Going beyond passive AQI numbers. Combining real-time CPCB monitoring with persona-driven
-            Gemini intelligence to optimize daily commutes, indoor air interventions, and low-emission routines.
-          </p>
-        </div>
-
-        {/* 3 Mandatory Pillars Preview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 hover:border-slate-700 transition-all shadow-lg shadow-black/20">
-            <div className="h-10 w-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4">
-              <Activity className="h-5 w-5" />
-            </div>
-            <h3 className="font-semibold text-lg text-white mb-2">1. Low-Emission Routines</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Diurnal temperature inversion timing, public transit / metro prioritization, and outdoor exercise rescheduling.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 hover:border-slate-700 transition-all shadow-lg shadow-black/20">
-            <div className="h-10 w-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <h3 className="font-semibold text-lg text-white mb-2">2. Indoor Air Quality Interventions</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Intelligent air purifier cycles, brief mid-day ventilation windows, botanical filters, and wet-mopping dust suppression.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-900/60 border border-slate-800 p-6 hover:border-slate-700 transition-all shadow-lg shadow-black/20">
-            <div className="h-10 w-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <h3 className="font-semibold text-lg text-white mb-2">3. Sustainable Alternatives</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Explicit causal justification quantifying both Personal Health Impact and Collective Ecological Impact.
-            </p>
-          </div>
-        </div>
-
-        {/* Milestone Roadmap Progress */}
-        <div className="rounded-2xl bg-slate-900/40 border border-slate-800/80 p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-            <div>
-              <h2 className="text-xl font-bold text-white">System Architecture &amp; Delivery Roadmap</h2>
-              <p className="text-sm text-slate-400">Milestone execution status following the Master Project Blueprint</p>
-            </div>
-            <span className="text-xs font-mono px-3 py-1 bg-cyan-950 text-cyan-300 border border-cyan-800 rounded-md">
-              Next.js 15 • TypeScript • Tailwind
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-            <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Milestone 1</span>
-                <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">COMPLETE</span>
-              </div>
-              <h4 className="font-medium text-white text-sm">Next.js 15 Scaffold &amp; Testing</h4>
-              <p className="text-xs text-slate-400 mt-1">TypeScript, Tailwind, Vitest, and guardrail scaffolding.</p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-500/5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Milestone 2</span>
-                <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono">NEXT UP</span>
-              </div>
-              <h4 className="font-medium text-white text-sm">Live AQI Service</h4>
-              <p className="text-xs text-slate-400 mt-1">WAQI / CPCB API integration across Indian metropolitan stations.</p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/30">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Milestone 3</span>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">QUEUED</span>
-              </div>
-              <h4 className="font-medium text-white text-sm">Gemini GenAI Engine</h4>
-              <p className="text-xs text-slate-400 mt-1">Structured JSON schema, persona reasoning, anti-hallucination.</p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/30">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Milestone 4</span>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">QUEUED</span>
-              </div>
-              <h4 className="font-medium text-white text-sm">Interactive Dashboard UI</h4>
-              <p className="text-xs text-slate-400 mt-1">Evaluator presets, live provenance card, responsive layouts.</p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/30">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Milestone 5</span>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">QUEUED</span>
-              </div>
-              <h4 className="font-medium text-white text-sm">Automated Test Suite</h4>
-              <p className="text-xs text-slate-400 mt-1">Unit testing for Phase 1 automated scoring rubric.</p>
-            </div>
-
-            <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/30">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Milestone 6</span>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">QUEUED</span>
-              </div>
-              <h4 className="font-medium text-white text-sm">Deployment &amp; Submission</h4>
-              <p className="text-xs text-slate-400 mt-1">Vercel live deployment, demo video, and technical writeup.</p>
             </div>
           </div>
         </div>
-      </section>
+
+        {errorMessage && (
+          <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-800 flex items-center gap-3 text-rose-200 text-xs">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* 1. Real-Time Station AQI & Provenance Section */}
+        <section aria-label="Live Air Quality Station">
+          <AqiProvenanceCard
+            aqiData={aqiData}
+            selectedStationId={selectedStationId}
+            onSelectStation={handleSelectStation}
+            isLoading={isLoadingAqi}
+          />
+        </section>
+
+        {/* 2. Evaluator Persona Presets Section */}
+        <section aria-label="Evaluator Personas">
+          <PersonaSelector
+            selectedPersonaId={selectedPersonaId}
+            onSelectPersona={handleSelectPersona}
+            isLoading={isLoadingAi}
+          />
+        </section>
+
+        {/* 3. Assistant Operational Advice Panel (3 Pillars) */}
+        <section aria-label="Operational Advice Panel">
+          <AssistantAdvicePanel
+            advice={advice}
+            isLoading={isLoadingAi}
+          />
+        </section>
+      </div>
     </main>
   );
 }
