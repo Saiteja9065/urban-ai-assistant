@@ -134,7 +134,7 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                 </div>
 
                 <h4 className="font-bold text-sm text-white">{data.role}</h4>
-                <p className="text-xs text-cyan-300 font-medium mb-1.5">{data.name}</p>
+                <p className="text-xs text-cyan-300/90 font-medium mb-1.5">{data.locationContext}</p>
                 <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
                   {data.description}
                 </p>

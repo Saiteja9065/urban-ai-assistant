@@ -5,21 +5,67 @@ import { AssistantAdvice, VerifiedAqiSnapshot } from '@/types/assistant';
 import { EVALUATOR_PERSONA_PRESETS } from './persona-constants';
 
 const GEMINI_SYSTEM_INSTRUCTION = `
-You are the Urban Air Quality Assistant, an expert environmental, health, and commute intelligence AI designed specifically for Indian metropolitan citizens dealing with severe winter smog and post-Diwali air pollution.
+You are the Urban Air Quality Assistant, an expert environmental, health, and commute intelligence AI designed specifically for Indian metropolitan citizens dealing with seasonal smog and particulate air pollution.
 
 You receive two sets of inputs:
-1. Live, verified AQI metrics from CPCB/WAQI monitoring stations (AQI, PM2.5, PM10, Station Name, Timestamp).
+1. Live, verified AQI metrics from CPCB/WAQI monitoring stations (AQI, PM2.5, PM10, Station Name, City, State, Timestamp).
 2. User demographic persona (Age, Health Conditions, Daily Routine, Commute context, Sensitivity Level).
 
 CRITICAL CONSTRAINTS & GOLDEN RULES:
 - NEVER invent, alter, recalculate, or extrapolate numerical AQI or PM numbers. The input values are strictly verified ground truth.
 - All recommendations must be strictly contextualized to the provided AQI level and the persona's physiological vulnerability.
+- GEOGRAPHIC ACCURACY: All transit and commute advice MUST explicitly reference the transit network of the user's active city (e.g., Hyderabad Metro / MMTS in Hyderabad; Mumbai Suburban Railway / Metro in Mumbai; Namma Metro in Bengaluru; Kolkata Metro in Kolkata; Chennai Metro in Chennai; Pune Metro in Pune; Delhi Metro in Delhi NCR). NEVER mention Delhi or Delhi Metro when the station is in another Indian city.
 - You MUST structure your entire response as a single, valid JSON object matching the required schema.
 - Every single recommendation MUST address one of the 3 Mandatory Pillars:
-  1. Pillar 1: Low-Emission Daily Routines & Commute Optimization (Metro vs road, diurnal inversion timing, avoiding early morning 6-9 AM and late evening 7-10 PM smog traps).
+  1. Pillar 1: Low-Emission Daily Routines & Commute Optimization (Local Metro vs road, diurnal inversion timing, avoiding early morning 6-9 AM and late evening 7-10 PM smog traps).
   2. Pillar 2: Indoor Air Quality Interventions (HEPA air purifier schedules, brief mid-day 12:30-3:30 PM ventilation windows when smog lifts, botanical filtering with Snake Plants/Areca Palms, and wet-mopping to suppress resuspended dust).
   3. Pillar 3: Sustainable Alternatives with Explicit "Why & Impact" Justifications (EVERY recommendation must provide explicit causal WHY and dual impact quantification: Personal Health Impact and Collective Ecological Impact).
 `;
+
+/**
+ * Resolves regional public transit networks for Indian metropolitan cities
+ */
+export function resolveCityTransit(city: string): { name: string; transitMode: string } {
+  const c = (city || '').toLowerCase();
+  if (c.includes('hyderabad') || c.includes('secunderabad') || c.includes('telangana')) {
+    return { name: 'Hyderabad Metro Rail / MMTS Transit', transitMode: 'Hyderabad Metro or MMTS local rail' };
+  }
+  if (c.includes('mumbai') || c.includes('thane') || c.includes('navi mumbai')) {
+    return { name: 'Mumbai Metro / Suburban Railway', transitMode: 'Mumbai Metro or Suburban local train' };
+  }
+  if (c.includes('bengaluru') || c.includes('bangalore')) {
+    return { name: 'Namma Metro / BMTC Electric Bus', transitMode: 'Namma Metro or BMTC electric bus' };
+  }
+  if (c.includes('kolkata') || c.includes('howrah')) {
+    return { name: 'Kolkata Metro / Suburban Transit', transitMode: 'Kolkata Metro or suburban train' };
+  }
+  if (c.includes('chennai')) {
+    return { name: 'Chennai Metro / MRTS Suburban Rail', transitMode: 'Chennai Metro or MRTS local transit' };
+  }
+  if (c.includes('pune') || c.includes('pcmc')) {
+    return { name: 'Pune Metro / PMPML Electric Transit', transitMode: 'Pune Metro or PMPML electric bus' };
+  }
+  if (c.includes('lucknow')) {
+    return { name: 'Lucknow Metro Rail', transitMode: 'Lucknow Metro' };
+  }
+  if (c.includes('jaipur')) {
+    return { name: 'Jaipur Metro Rail', transitMode: 'Jaipur Metro' };
+  }
+  if (c.includes('ahmedabad')) {
+    return { name: 'Ahmedabad Metro / Janmarg BRTS', transitMode: 'Ahmedabad Metro or Janmarg BRTS electric corridor' };
+  }
+  if (c.includes('patna')) {
+    return { name: 'Patna Electric City Transit / Suburban Rail', transitMode: 'Patna electric bus fleet or local rail' };
+  }
+  if (c.includes('chandigarh')) {
+    return { name: 'CTU Electric Bus Rapid Transit', transitMode: 'CTU electric rapid bus network' };
+  }
+  if (c.includes('delhi') || c.includes('noida') || c.includes('gurgaon') || c.includes('ghaziabad') || c.includes('faridabad')) {
+    return { name: 'Delhi Metro (DMRC) / RRTS Rail', transitMode: 'Delhi Metro or RRTS electric transit' };
+  }
+  const cityName = city && city.trim() ? city.split(',')[0].trim() : 'Local City';
+  return { name: `${cityName} Metro / Rapid Transit`, transitMode: `${cityName} electric bus or rapid transit` };
+}
 
 /**
  * Deterministic reasoning fallback engine
@@ -32,6 +78,9 @@ export function generateDeterministicAdvice(
   const { aqi, pollutants, station, provenance } = aqiData;
   const pm25 = pollutants.pm25 || Math.round(aqi * 0.7);
   const pm10 = pollutants.pm10 || Math.round(aqi * 1.1);
+  const transit = resolveCityTransit(station.city || '');
+  const cityName = station.city && station.city.trim() ? station.city : 'your area';
+  const personaLabel = persona.name;
 
   const snapshot: VerifiedAqiSnapshot = {
     aqi,
@@ -49,14 +98,14 @@ export function generateDeterministicAdvice(
   const isPoor = aqi > 100;
 
   // Pillar 1: Commute & Routine customization
-  let commuteMode = 'Combine errands and shift to electric public transit or Metro.';
+  let commuteMode = `Combine errands and shift to electric public transit or ${transit.name}.`;
   let commuteTiming = 'Avoid peak surface inversion hours (06:00 AM - 09:00 AM and 07:00 PM - 10:00 PM).';
   let inversionWarning = 'Winter nocturnal radiation inversion traps vehicular exhaust in the lowest 50-100 meters of the atmosphere. Delay outdoor movement until solar radiation breaks the inversion layer (after 10:30 AM).';
 
   if (persona.id === 'commuter') {
     commuteMode = isSevere
-      ? 'Divert completely from 2-wheeler/bike to Delhi/Metro rail. If car commute is mandatory, ensure cabin air recirculation (AC Recirculation ON) with an active carbon PM2.5 cabin filter and wear a certified N95/FFP2 mask.'
-      : 'Prioritize Metro transit or EV feeder buses over personal motorized vehicles.';
+      ? `Divert completely from 2-wheeler/bike to ${transit.name}. If car commute is mandatory, ensure cabin air recirculation (AC Recirculation ON) with an active carbon PM2.5 cabin filter and wear a certified N95/FFP2 mask.`
+      : `Prioritize ${transit.name} or electric feeder buses over personal motorized two-wheelers.`;
     commuteTiming = isSevere
       ? 'Negotiate staggered work hours: depart after 10:30 AM and return prior to 6:00 PM to circumvent dense vehicular fume accumulation during temperature inversion.'
       : 'Normal commute timing with N95 masking during peak traffic corridors.';
@@ -92,7 +141,7 @@ export function generateDeterministicAdvice(
   const recommendations = [
     {
       action: persona.id === 'commuter'
-        ? 'Shift 18 km daily solo commute from motorcycle/car to Delhi Metro / Rail Transit'
+        ? `Shift daily solo motorized commute to ${transit.name}`
         : 'Consolidate multiple weekly grocery and pharmacy trips into a single planned mid-day journey',
       causalWhy: 'Private vehicular travel in congested corridors exposes the commuter directly to localized tailpipe plumes of NOx and unburned hydrocarbons while generating high per-capita emissions.',
       personalHealthImpact: 'Reduces direct PM2.5 and ultra-fine black carbon inhalation by ~68% compared to open road two-wheeler riding.',
@@ -116,8 +165,47 @@ export function generateDeterministicAdvice(
     },
   ];
 
+  // Distinct, persona-specific summary formulation
+  let summary = '';
+  if (persona.id === 'parent') {
+    if (isSevere) {
+      summary = `At hazardous AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} must immediately seal nursery windows, run continuous HEPA purification, and suspend all outdoor toddler playground outings.`;
+    } else if (isPoor) {
+      summary = `At AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} should restrict toddler outdoor play to mid-day thermal mixing hours (12:30–3:00 PM) and isolate sleeping quarters with targeted filtration.`;
+    } else {
+      summary = `At AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ambient air allows outdoor toddler activities during afternoon hours while monitoring morning ground-level particulate haze.`;
+    }
+  } else if (persona.id === 'senior') {
+    if (isSevere) {
+      summary = `At hazardous AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} must cancel morning outdoor walks to avoid temperature inversion smog traps, keep rescue inhalers accessible, and practice indoor pranayama.`;
+    } else if (isPoor) {
+      summary = `At AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} should shift early morning park walks indoors to prevent bronchospasms triggered by cold stagnant particulates.`;
+    } else {
+      summary = `At AQI ${aqi} (${aqiData.category.label}) in ${cityName}, gentle outdoor walking is safe during warm sunlit hours between 11:30 AM and 3:30 PM with adequate hydration.`;
+    }
+  } else if (persona.id === 'athlete') {
+    if (isSevere) {
+      summary = `At hazardous AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} must relocate all cardiovascular training indoors; heavy aerobic breathing under high particulate loading causes severe alveolar inflammation.`;
+    } else if (isPoor) {
+      summary = `At AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} should substitute intense outdoor interval drills with indoor gym conditioning and maintain antioxidant hydration.`;
+    } else {
+      summary = `At AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} can complete scheduled outdoor training with post-workout nasal saline irrigation and travel masking.`;
+    }
+  } else if (persona.id === 'commuter') {
+    if (isSevere) {
+      summary = `At hazardous AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} faces severe tailpipe exposure; mandatory transition to ${transit.name} and vehicle cabin air recirculation is advised.`;
+    } else if (isPoor) {
+      summary = `At AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} should adjust travel departure past peak inversion rush hours and prioritize ${transit.transitMode} with N95 masking.`;
+    } else {
+      summary = `At AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} can maintain normal work schedules with proactive ${transit.transitMode} usage to minimize personal carbon footprint.`;
+    }
+  } else {
+    // Custom / Default Persona
+    summary = `At current AQI ${aqi} (${aqiData.category.label}) in ${cityName}, ${personaLabel} requires ${isSevere ? 'immediate high-priority particulate mitigation' : 'proactive daily air quality adjustments'} tailored to local ${transit.name} transit and indoor air sealing.`;
+  }
+
   return {
-    summary: `At current AQI ${aqi} (${aqiData.category.label}) in ${station.city}, ${persona.name} (${persona.role}) requires immediate ${isSevere ? 'high-priority particulate mitigation' : 'targeted daily adjustments'} focused on commute diversion and indoor air sealing.`,
+    summary,
     threatLevel: isSevere ? 'hazardous' : isPoor ? 'severe' : 'moderate',
     verifiedAqiSnapshot: snapshot,
     personaProfile: {
@@ -190,6 +278,9 @@ export async function getAssistantAdvice(
     return generateDeterministicAdvice(aqiData, persona);
   }
 
+  const transit = resolveCityTransit(aqiData.station.city || '');
+  const activeCity = aqiData.station.city && aqiData.station.city.trim() ? aqiData.station.city : 'Indian Metropolitan City';
+
   try {
     const genAI = new GoogleGenerativeAI(key);
     // Use gemini-2.0-flash with JSON mode
@@ -207,6 +298,8 @@ Generate contextual, actionable smog assistance based on these verified ground-t
 
 1. VERIFIED AIR QUALITY DATA:
 - Station Name: ${aqiData.station.name} (${aqiData.station.city}, ${aqiData.station.state})
+- City / Region: ${activeCity}
+- Local Public Transit Network: ${transit.name}
 - Verified AQI: ${aqiData.aqi} (${aqiData.category.label})
 - Dominant Pollutant: ${aqiData.dominantPollutant.toUpperCase()}
 - PM2.5: ${aqiData.pollutants.pm25 || 'N/A'} µg/m³
@@ -219,11 +312,14 @@ Generate contextual, actionable smog assistance based on these verified ground-t
 - Name: ${persona.name}
 - Role / Archetype: ${persona.role} (ID: ${persona.id})
 - Age: ${persona.age}
-- Location & Commute: ${persona.locationContext}
+- Location & Commute Context: ${persona.locationContext} in ${activeCity}
 - Health Vulnerabilities: ${persona.healthConditions.join(', ')}
 - Daily Routine: ${persona.routine}
 - Sensitivity Level: ${persona.sensitivityLevel}
 - Key Needs: ${persona.keyNeeds.join(', ')}
+
+MANDATORY REGIONAL CONSTRAINT:
+- The user is currently in ${activeCity}. All transit mode recommendations and commute shift actions MUST refer to ${transit.name} (or local electric transit), NEVER mention Delhi Metro or NCR unless the station is actually located in Delhi NCR.
 
 MANDATORY OUTPUT FORMAT (Must strictly match this JSON structure):
 {
