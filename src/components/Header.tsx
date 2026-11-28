@@ -1,5 +1,6 @@
 import React from 'react';
 import { Wind, RefreshCw, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface HeaderProps {
   onRefresh?: () => void;
@@ -11,7 +12,6 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isLoading, isAiLoadin
   return (
     <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand */}
         <div className="flex items-center space-x-3">
           <div className="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-sm shadow-cyan-500/20">
             <Wind className="h-5 w-5 animate-pulse" aria-hidden="true" />
@@ -31,7 +31,6 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isLoading, isAiLoadin
           </div>
         </div>
 
-        {/* Actions & Live Status */}
         <div className="flex items-center space-x-3">
           <div role="status" aria-live="polite">
             {isAiLoading ? (
@@ -56,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh, isLoading, isAiLoadin
               className="p-2 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500"
               title="Refresh live AQI & AI Guidance"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
+              <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} aria-hidden="true" />
             </button>
           )}
         </div>

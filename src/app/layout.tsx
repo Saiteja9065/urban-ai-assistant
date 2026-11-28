@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: 'AI-driven contextual air quality assistant for Indian metropolitan citizens with demographic personas and actionable health, commute, and indoor guidance.',
 };
 
+/** Root HTML layout providing dark theme shell, metadata, and global styles. */
 export default function RootLayout({
   children,
 }: Readonly<{

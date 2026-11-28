@@ -1,9 +1,9 @@
 import { PersonaPresetId, UserProfile } from '@/types/persona';
 
 /**
- * Mandatory Pre-Configured Presets for Instant Evaluator Testing
- * Matches Section 3 of Master Project Brief
- * Configured as Demographic Archetypes with clear Age Brackets
+ * Mandatory pre-configured evaluator persona presets for instant demographic testing.
+ * Matches Section 3 of the Master Project Brief: four archetypes covering
+ * distinct age brackets, commute patterns, and physiological vulnerabilities.
  */
 export const EVALUATOR_PERSONA_PRESETS: Record<Exclude<PersonaPresetId, 'custom'>, UserProfile> = {
   commuter: {
@@ -81,6 +81,7 @@ export const EVALUATOR_PERSONA_PRESETS: Record<Exclude<PersonaPresetId, 'custom'
   },
 };
 
+/** Default profile used as a base when a custom persona is submitted. */
 export const DEFAULT_CUSTOM_PERSONA: UserProfile = {
   id: 'custom',
   name: 'Custom Citizen Profile',
@@ -95,7 +96,8 @@ export const DEFAULT_CUSTOM_PERSONA: UserProfile = {
   description: 'Custom demographic profile configured by user.',
 };
 
-export const PERSONA_LIST: UserProfile[] = [
+/** Ordered list of all built-in persona presets for iteration. */
+export const PERSONA_LIST: readonly UserProfile[] = [
   EVALUATOR_PERSONA_PRESETS.commuter,
   EVALUATOR_PERSONA_PRESETS.parent,
   EVALUATOR_PERSONA_PRESETS.senior,

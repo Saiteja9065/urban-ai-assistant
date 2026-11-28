@@ -1,15 +1,25 @@
 {
   "name": "urban-ai-assistant",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "AI-driven urban air quality assistant for Indian metropolitan citizens with demographic personas, real-time CPCB/WAQI monitoring, and actionable health/commute/indoor guidance powered by Google Gemini 2.0 Flash.",
+  "author": "Saiteja",
+  "license": "MIT",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "validate": "npm run lint && npm run type-check && npm run test && npm run build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
