@@ -61,8 +61,12 @@ export interface StationAqiData {
   provenance: DataProvenance;
 }
 
+export interface StationPresetsPayload {
+  presets: StationMetadata[];
+}
+
 export interface AqiApiResponse {
   success: boolean;
-  data?: StationAqiData;
+  data?: StationAqiData | StationPresetsPayload;
   error?: string;
 }

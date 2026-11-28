@@ -430,258 +430,166 @@ export const METRO_REGIONS: MetroRegion[] = [
 export const BENCHMARK_TIMESTAMP = '2026-11-22T06:00:00+05:30';
 export const BENCHMARK_LOCAL_TIME = '22/11/2026, 06:00:00 AM IST';
 
+function getPresetStation(id: string): StationMetadata {
+  const station = INDIAN_METRO_STATIONS.find((s) => s.id === id);
+  if (!station) {
+    throw new Error(`Unknown preset station id: ${id}`);
+  }
+  return station;
+}
+
+interface BenchmarkFallbackInput {
+  stationId: string;
+  aqi: number;
+  category: AqiCategoryInfo;
+  dominantPollutant: string;
+  pollutants: StationAqiData['pollutants'];
+  weather: NonNullable<StationAqiData['weather']>;
+  source: string;
+  stationName: string;
+  stationUrl: string;
+  attributions: StationAqiData['provenance']['attributions'];
+  fallbackReason: string;
+}
+
+function createBenchmarkFallback(input: BenchmarkFallbackInput): StationAqiData {
+  return {
+    station: getPresetStation(input.stationId),
+    aqi: input.aqi,
+    category: input.category,
+    dominantPollutant: input.dominantPollutant,
+    pollutants: input.pollutants,
+    weather: input.weather,
+    provenance: {
+      source: input.source,
+      stationName: input.stationName,
+      stationUrl: input.stationUrl,
+      timestamp: BENCHMARK_TIMESTAMP,
+      localTimeString: BENCHMARK_LOCAL_TIME,
+      attributions: input.attributions,
+      isLive: false,
+      fallbackReason: input.fallbackReason,
+    },
+  };
+}
+
 /**
  * Verified Ground-Truth Benchmark Snapshots for Indian Stations.
  * Used when WAQI_API_TOKEN is not configured or live network is unavailable,
  * ensuring flawless evaluator testing without synthetic hallucinations.
  */
 export const BENCHMARK_STATION_FALLBACKS: Record<string, StationAqiData> = {
-  'delhi-anand-vihar': {
-    station: INDIAN_METRO_STATIONS[0],
+  'delhi-anand-vihar': createBenchmarkFallback({
+    stationId: 'delhi-anand-vihar',
     aqi: 388,
     category: AQI_CATEGORIES.severe,
     dominantPollutant: 'pm25',
-    pollutants: {
-      pm25: 342,
-      pm10: 468,
-      no2: 84,
-      so2: 24,
-      co: 46,
-      o3: 28,
-    },
-    weather: {
-      temperature: 16.5,
-      humidity: 82,
-      windSpeed: 0.8,
-      pressure: 1018,
-    },
-    provenance: {
-      source: 'CPCB / DPCC Monitoring Station',
-      stationName: 'Anand Vihar, Delhi - DPCC',
-      stationUrl: 'https://cpcb.nic.in',
-      timestamp: BENCHMARK_TIMESTAMP,
-      localTimeString: BENCHMARK_LOCAL_TIME,
-      attributions: [
-        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
-        { name: 'Delhi Pollution Control Committee (DPCC)', url: 'https://dpcc.delhigovt.nic.in' },
-      ],
-      isLive: false,
-      fallbackReason: 'Verified CPCB seasonal winter smog baseline (Token unconfigured or network fallback)',
-    },
-  },
-  'delhi-ito': {
-    station: INDIAN_METRO_STATIONS[1],
+    pollutants: { pm25: 342, pm10: 468, no2: 84, so2: 24, co: 46, o3: 28 },
+    weather: { temperature: 16.5, humidity: 82, windSpeed: 0.8, pressure: 1018 },
+    source: 'CPCB / DPCC Monitoring Station',
+    stationName: 'Anand Vihar, Delhi - DPCC',
+    stationUrl: 'https://cpcb.nic.in',
+    attributions: [
+      { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+      { name: 'Delhi Pollution Control Committee (DPCC)', url: 'https://dpcc.delhigovt.nic.in' },
+    ],
+    fallbackReason: 'Verified CPCB seasonal winter smog baseline (Token unconfigured or network fallback)',
+  }),
+  'delhi-ito': createBenchmarkFallback({
+    stationId: 'delhi-ito',
     aqi: 345,
     category: AQI_CATEGORIES.severe,
     dominantPollutant: 'pm25',
-    pollutants: {
-      pm25: 298,
-      pm10: 412,
-      no2: 78,
-      so2: 19,
-      co: 41,
-      o3: 31,
-    },
-    weather: {
-      temperature: 17.2,
-      humidity: 79,
-      windSpeed: 1.1,
-      pressure: 1017,
-    },
-    provenance: {
-      source: 'CPCB / DPCC Monitoring Station',
-      stationName: 'ITO, Central Delhi - CPCB',
-      stationUrl: 'https://cpcb.nic.in',
-      timestamp: BENCHMARK_TIMESTAMP,
-      localTimeString: BENCHMARK_LOCAL_TIME,
-      attributions: [
-        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
-      ],
-      isLive: false,
-      fallbackReason: 'Verified CPCB seasonal winter smog baseline (Token unconfigured or network fallback)',
-    },
-  },
-  'mumbai-bkc': {
-    station: INDIAN_METRO_STATIONS[5],
+    pollutants: { pm25: 298, pm10: 412, no2: 78, so2: 19, co: 41, o3: 31 },
+    weather: { temperature: 17.2, humidity: 79, windSpeed: 1.1, pressure: 1017 },
+    source: 'CPCB / DPCC Monitoring Station',
+    stationName: 'ITO, Central Delhi - CPCB',
+    stationUrl: 'https://cpcb.nic.in',
+    attributions: [
+      { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+    ],
+    fallbackReason: 'Verified CPCB seasonal winter smog baseline (Token unconfigured or network fallback)',
+  }),
+  'mumbai-bkc': createBenchmarkFallback({
+    stationId: 'mumbai-bkc',
     aqi: 172,
     category: AQI_CATEGORIES.poor,
     dominantPollutant: 'pm25',
-    pollutants: {
-      pm25: 96,
-      pm10: 168,
-      no2: 44,
-      so2: 14,
-      co: 22,
-      o3: 38,
-    },
-    weather: {
-      temperature: 28.4,
-      humidity: 68,
-      windSpeed: 3.2,
-      pressure: 1012,
-    },
-    provenance: {
-      source: 'MPCB / CPCB Monitoring Station',
-      stationName: 'Bandra Kurla Complex (BKC), Mumbai - MPCB',
-      stationUrl: 'https://mpcb.gov.in',
-      timestamp: BENCHMARK_TIMESTAMP,
-      localTimeString: BENCHMARK_LOCAL_TIME,
-      attributions: [
-        { name: 'Maharashtra Pollution Control Board (MPCB)', url: 'https://mpcb.gov.in' },
-        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
-      ],
-      isLive: false,
-      fallbackReason: 'Verified MPCB seasonal baseline (Token unconfigured or network fallback)',
-    },
-  },
-  'kolkata-victoria': {
-    station: INDIAN_METRO_STATIONS[7],
+    pollutants: { pm25: 96, pm10: 168, no2: 44, so2: 14, co: 22, o3: 38 },
+    weather: { temperature: 28.4, humidity: 68, windSpeed: 3.2, pressure: 1012 },
+    source: 'MPCB / CPCB Monitoring Station',
+    stationName: 'Bandra Kurla Complex (BKC), Mumbai - MPCB',
+    stationUrl: 'https://mpcb.gov.in',
+    attributions: [
+      { name: 'Maharashtra Pollution Control Board (MPCB)', url: 'https://mpcb.gov.in' },
+      { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+    ],
+    fallbackReason: 'Verified MPCB seasonal baseline (Token unconfigured or network fallback)',
+  }),
+  'kolkata-victoria': createBenchmarkFallback({
+    stationId: 'kolkata-victoria',
     aqi: 268,
     category: AQI_CATEGORIES.unhealthy,
     dominantPollutant: 'pm25',
-    pollutants: {
-      pm25: 184,
-      pm10: 275,
-      no2: 52,
-      so2: 18,
-      co: 29,
-      o3: 24,
-    },
-    weather: {
-      temperature: 21.0,
-      humidity: 74,
-      windSpeed: 1.4,
-      pressure: 1015,
-    },
-    provenance: {
-      source: 'WBPCB / CPCB Monitoring Station',
-      stationName: 'Victoria Memorial, Kolkata - WBPCB',
-      stationUrl: 'https://wbpcb.gov.in',
-      timestamp: BENCHMARK_TIMESTAMP,
-      localTimeString: BENCHMARK_LOCAL_TIME,
-      attributions: [
-        { name: 'West Bengal Pollution Control Board (WBPCB)', url: 'https://wbpcb.gov.in' },
-        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
-      ],
-      isLive: false,
-      fallbackReason: 'Verified WBPCB seasonal baseline (Token unconfigured or network fallback)',
-    },
-  },
-  'bengaluru-btm': {
-    station: INDIAN_METRO_STATIONS[9],
+    pollutants: { pm25: 184, pm10: 275, no2: 52, so2: 18, co: 29, o3: 24 },
+    weather: { temperature: 21.0, humidity: 74, windSpeed: 1.4, pressure: 1015 },
+    source: 'WBPCB / CPCB Monitoring Station',
+    stationName: 'Victoria Memorial, Kolkata - WBPCB',
+    stationUrl: 'https://wbpcb.gov.in',
+    attributions: [
+      { name: 'West Bengal Pollution Control Board (WBPCB)', url: 'https://wbpcb.gov.in' },
+      { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+    ],
+    fallbackReason: 'Verified WBPCB seasonal baseline (Token unconfigured or network fallback)',
+  }),
+  'bengaluru-btm': createBenchmarkFallback({
+    stationId: 'bengaluru-btm',
     aqi: 78,
     category: AQI_CATEGORIES.moderate,
     dominantPollutant: 'pm10',
-    pollutants: {
-      pm25: 25,
-      pm10: 78,
-      no2: 28,
-      so2: 8,
-      co: 14,
-      o3: 42,
-    },
-    weather: {
-      temperature: 24.1,
-      humidity: 55,
-      windSpeed: 2.8,
-      pressure: 1014,
-    },
-    provenance: {
-      source: 'KSPCB / CPCB Monitoring Station',
-      stationName: 'BTM Layout, Bengaluru - KSPCB',
-      stationUrl: 'https://kspcb.karnataka.gov.in',
-      timestamp: BENCHMARK_TIMESTAMP,
-      localTimeString: BENCHMARK_LOCAL_TIME,
-      attributions: [
-        { name: 'Karnataka State Pollution Control Board (KSPCB)', url: 'https://kspcb.karnataka.gov.in' },
-        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
-      ],
-      isLive: false,
-      fallbackReason: 'Verified KSPCB baseline (Token unconfigured or network fallback)',
-    },
-  },
-  'hyderabad-sanathnagar': {
-    station: {
-      id: 'hyderabad-sanathnagar',
-      name: 'Sanath Nagar, Hyderabad',
-      city: 'Hyderabad',
-      state: 'Telangana',
-      country: 'India',
-      coordinates: [17.456, 78.443],
-      cpcbCode: 'TG001',
-    },
+    pollutants: { pm25: 25, pm10: 78, no2: 28, so2: 8, co: 14, o3: 42 },
+    weather: { temperature: 24.1, humidity: 55, windSpeed: 2.8, pressure: 1014 },
+    source: 'KSPCB / CPCB Monitoring Station',
+    stationName: 'BTM Layout, Bengaluru - KSPCB',
+    stationUrl: 'https://kspcb.karnataka.gov.in',
+    attributions: [
+      { name: 'Karnataka State Pollution Control Board (KSPCB)', url: 'https://kspcb.karnataka.gov.in' },
+      { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+    ],
+    fallbackReason: 'Verified KSPCB baseline (Token unconfigured or network fallback)',
+  }),
+  'hyderabad-sanathnagar': createBenchmarkFallback({
+    stationId: 'hyderabad-sanathnagar',
     aqi: 146,
     category: AQI_CATEGORIES.poor,
     dominantPollutant: 'pm25',
-    pollutants: {
-      pm25: 72,
-      pm10: 142,
-      no2: 48,
-      so2: 12,
-      co: 24,
-      o3: 36,
-    },
-    weather: {
-      temperature: 28.2,
-      humidity: 58,
-      windSpeed: 2.1,
-      pressure: 1013,
-    },
-    provenance: {
-      source: 'TSPCB / CPCB Monitoring Station',
-      stationName: 'Sanath Nagar, Hyderabad - TSPCB',
-      stationUrl: 'https://tspcb.cpcb.nic.in',
-      timestamp: BENCHMARK_TIMESTAMP,
-      localTimeString: BENCHMARK_LOCAL_TIME,
-      attributions: [
-        { name: 'Telangana State Pollution Control Board (TSPCB)', url: 'https://tspcb.cpcb.nic.in' },
-        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
-      ],
-      isLive: false,
-      fallbackReason: 'Verified TSPCB seasonal baseline (Token unconfigured or network fallback)',
-    },
-  },
-  'hyderabad-gachibowli': {
-    station: {
-      id: 'hyderabad-gachibowli',
-      name: 'Gachibowli / Hitec City, Hyderabad',
-      city: 'Hyderabad',
-      state: 'Telangana',
-      country: 'India',
-      coordinates: [17.440, 78.348],
-      cpcbCode: 'TG002',
-    },
+    pollutants: { pm25: 72, pm10: 142, no2: 48, so2: 12, co: 24, o3: 36 },
+    weather: { temperature: 28.2, humidity: 58, windSpeed: 2.1, pressure: 1013 },
+    source: 'TSPCB / CPCB Monitoring Station',
+    stationName: 'Sanath Nagar, Hyderabad - TSPCB',
+    stationUrl: 'https://tspcb.cpcb.nic.in',
+    attributions: [
+      { name: 'Telangana State Pollution Control Board (TSPCB)', url: 'https://tspcb.cpcb.nic.in' },
+      { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+    ],
+    fallbackReason: 'Verified TSPCB seasonal baseline (Token unconfigured or network fallback)',
+  }),
+  'hyderabad-gachibowli': createBenchmarkFallback({
+    stationId: 'hyderabad-gachibowli',
     aqi: 112,
     category: AQI_CATEGORIES.poor,
     dominantPollutant: 'pm25',
-    pollutants: {
-      pm25: 52,
-      pm10: 108,
-      no2: 38,
-      so2: 9,
-      co: 18,
-      o3: 40,
-    },
-    weather: {
-      temperature: 27.8,
-      humidity: 54,
-      windSpeed: 2.4,
-      pressure: 1013,
-    },
-    provenance: {
-      source: 'TSPCB / CPCB Monitoring Station',
-      stationName: 'Gachibowli / Hitec City, Hyderabad - TSPCB',
-      stationUrl: 'https://tspcb.cpcb.nic.in',
-      timestamp: BENCHMARK_TIMESTAMP,
-      localTimeString: BENCHMARK_LOCAL_TIME,
-      attributions: [
-        { name: 'Telangana State Pollution Control Board (TSPCB)', url: 'https://tspcb.cpcb.nic.in' },
-        { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
-      ],
-      isLive: false,
-      fallbackReason: 'Verified TSPCB seasonal baseline (Token unconfigured or network fallback)',
-    },
-  },
+    pollutants: { pm25: 52, pm10: 108, no2: 38, so2: 9, co: 18, o3: 40 },
+    weather: { temperature: 27.8, humidity: 54, windSpeed: 2.4, pressure: 1013 },
+    source: 'TSPCB / CPCB Monitoring Station',
+    stationName: 'Gachibowli / Hitec City, Hyderabad - TSPCB',
+    stationUrl: 'https://tspcb.cpcb.nic.in',
+    attributions: [
+      { name: 'Telangana State Pollution Control Board (TSPCB)', url: 'https://tspcb.cpcb.nic.in' },
+      { name: 'Central Pollution Control Board (CPCB)', url: 'https://cpcb.nic.in' },
+    ],
+    fallbackReason: 'Verified TSPCB seasonal baseline (Token unconfigured or network fallback)',
+  }),
 };
 
 /**

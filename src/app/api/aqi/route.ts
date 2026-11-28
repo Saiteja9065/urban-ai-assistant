@@ -4,16 +4,20 @@ import { AqiApiResponse } from '@/types/aqi';
 
 export const dynamic = 'force-dynamic';
 
+const MAX_STATION_QUERY_LENGTH = 120;
+
+function parseCoordinateParam(raw: string | null, min: number, max: number): number | null {
+  if (raw === null || raw.trim() === '') return null;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
+    return null;
+  }
+  return parsed;
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse<AqiApiResponse>> {
   try {
     const { searchParams } = new URL(request.url);
-    const lat = searchParams.get('lat');
-    const lon = searchParams.get('lon');
-    let stationQuery = searchParams.get('station') || searchParams.get('city') || 'delhi-anand-vihar';
-
-    if (lat && lon) {
-      stationQuery = `geo:${lat};${lon}`;
-    }
 
     // Support listing all available stations if ?stations=list
     if (searchParams.get('stations') === 'list') {
@@ -21,8 +25,37 @@ export async function GET(request: NextRequest): Promise<NextResponse<AqiApiResp
         success: true,
         data: {
           presets: INDIAN_METRO_STATIONS,
-        } as unknown as any,
+        },
       });
+    }
+
+    const rawLat = searchParams.get('lat');
+    const rawLon = searchParams.get('lon');
+    let stationQuery = (searchParams.get('station') || searchParams.get('city') || 'delhi-anand-vihar').trim();
+
+    if (rawLat !== null || rawLon !== null) {
+      const lat = parseCoordinateParam(rawLat, -90, 90);
+      const lon = parseCoordinateParam(rawLon, -180, 180);
+      if (lat === null || lon === null) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Invalid latitude or longitude coordinates.',
+          },
+          { status: 400 }
+        );
+      }
+      stationQuery = `geo:${lat};${lon}`;
+    } else if (stationQuery.length === 0) {
+      stationQuery = 'delhi-anand-vihar';
+    } else if (stationQuery.length > MAX_STATION_QUERY_LENGTH) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Station query exceeds maximum allowed length.',
+        },
+        { status: 400 }
+      );
     }
 
     const data = await getLiveAqi(stationQuery);
@@ -40,11 +73,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<AqiApiResp
       }
     );
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to retrieve AQI data';
+    console.error('[GET /api/aqi] Unexpected error:', error);
     return NextResponse.json(
       {
         success: false,
-        error: message,
+        error: 'Failed to retrieve AQI data',
       },
       { status: 500 }
     );

@@ -25,7 +25,7 @@ describe('/api/assistant Route Handler (Milestone 3)', () => {
     expect(json.data.pillar3_sustainableAlternatives.recommendations.length).toBeGreaterThan(0);
   });
 
-  it('handles custom persona input', async () => {
+  it('handles and sanitizes custom persona input', async () => {
     const req = new NextRequest('http://localhost:3000/api/assistant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -47,5 +47,27 @@ describe('/api/assistant Route Handler (Milestone 3)', () => {
     const json = await response.json();
     expect(json.success).toBe(true);
     expect(json.data.personaProfile.id).toBe('custom');
+    expect(json.data.personaProfile.age).toBe(26);
+  });
+
+  it('rejects malformed JSON and invalid aqiData payloads with 400', async () => {
+    const invalidJsonReq = new NextRequest('http://localhost:3000/api/assistant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{invalid-json',
+    });
+    const invalidJsonRes = await POST(invalidJsonReq);
+    expect(invalidJsonRes.status).toBe(400);
+
+    const forgedAqiReq = new NextRequest('http://localhost:3000/api/assistant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        personaId: 'commuter',
+        aqiData: { aqi: 99999 },
+      }),
+    });
+    const forgedAqiRes = await POST(forgedAqiReq);
+    expect(forgedAqiRes.status).toBe(400);
   });
 });

@@ -1,14 +1,16 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   getAqiCategory,
   INDIAN_METRO_STATIONS,
-  BENCHMARK_STATION_FALLBACKS,
+  DEFAULT_STATION_DATA,
 } from '@/lib/aqi-constants';
 import {
   findStationMetadata,
   parseWaqiResponse,
+  parseGeoQuery,
   getFallbackData,
   getLiveAqi,
+  WaqiApiResponse,
 } from '@/lib/waqi-service';
 
 describe('AQI Service & Constants (Milestone 2)', () => {
@@ -29,7 +31,7 @@ describe('AQI Service & Constants (Milestone 2)', () => {
     });
   });
 
-  describe('Indian Metropolitan Presets', () => {
+  describe('Indian Metropolitan Presets & Geo Validation', () => {
     it('contains major metropolitan smog centers', () => {
       const cities = INDIAN_METRO_STATIONS.map((s) => s.city.toLowerCase());
       expect(cities).toContain('delhi');
@@ -47,16 +49,36 @@ describe('AQI Service & Constants (Milestone 2)', () => {
       expect(mumbai).toBeDefined();
       expect(mumbai?.city).toBe('Mumbai');
     });
+
+    it('validates geo coordinate queries and rejects malformed or out-of-range inputs', () => {
+      expect(parseGeoQuery('geo:28.6139;77.2090')).toEqual({ lat: 28.6139, lon: 77.209 });
+      expect(parseGeoQuery('geo:0;0')).toEqual({ lat: 0, lon: 0 });
+      expect(parseGeoQuery('geo:91;77.2')).toBeNull();
+      expect(parseGeoQuery('geo:28.6;181')).toBeNull();
+      expect(parseGeoQuery('geo:28.6;77.2/../../admin')).toBeNull();
+    });
   });
 
   describe('Fallback Mechanism', () => {
-    it('returns verified CPCB ground-truth benchmark without crashing', () => {
-      const fallback = getFallbackData('delhi-anand-vihar', 'Test reason');
+    it('returns verified CPCB ground-truth benchmark without mutating shared constants', () => {
+      const originalReason = DEFAULT_STATION_DATA.provenance.fallbackReason;
+      const fallback = getFallbackData('delhi-anand-vihar', 'Test isolation reason');
       expect(fallback.aqi).toBe(388);
       expect(fallback.category.category).toBe('severe');
       expect(fallback.provenance.isLive).toBe(false);
-      expect(fallback.provenance.fallbackReason).toBe('Test reason');
+      expect(fallback.provenance.fallbackReason).toBe('Test isolation reason');
       expect(fallback.provenance.stationName).toContain('Anand Vihar');
+      expect(DEFAULT_STATION_DATA.provenance.fallbackReason).toBe(originalReason);
+    });
+
+    it('supports geo coordinate and custom city fallbacks', () => {
+      const geoFallback = getFallbackData('geo:17.4400;78.3480');
+      expect(geoFallback.station.coordinates).toEqual([17.44, 78.348]);
+      expect(geoFallback.station.name).toContain('17.44°N');
+
+      const cityFallback = getFallbackData('pune');
+      expect(cityFallback.station.city).toBe('Pune');
+      expect(cityFallback.provenance.stationName).toContain('Pune');
     });
 
     it('falls back to default when station query is unknown', () => {
@@ -68,7 +90,7 @@ describe('AQI Service & Constants (Milestone 2)', () => {
 
   describe('WAQI API Response Parsing', () => {
     it('transforms valid WAQI JSON payload into typed StationAqiData', () => {
-      const mockWaqiJson: any = {
+      const mockWaqiJson: WaqiApiResponse = {
         status: 'ok',
         data: {
           aqi: 312,
@@ -157,13 +179,16 @@ describe('AQI Service & Constants (Milestone 2)', () => {
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it('falls back gracefully to verified benchmark if fetch throws', async () => {
-      process.env.WAQI_API_TOKEN = 'test-token-valid';
-      global.fetch = vi.fn().mockRejectedValue(new Error('Network error (DNS lookup failed)'));
+    it('falls back gracefully and redacts API tokens if fetch throws', async () => {
+      process.env.WAQI_API_TOKEN = 'secret-waqi-token-123';
+      global.fetch = vi.fn().mockRejectedValue(
+        new Error('Request failed for https://api.waqi.info/feed/test/?token=secret-waqi-token-123')
+      );
 
       const data = await getLiveAqi('delhi-anand-vihar');
       expect(data.provenance.isLive).toBe(false);
       expect(data.provenance.fallbackReason).toContain('Live WAQI API fetch failed');
+      expect(data.provenance.fallbackReason).not.toContain('secret-waqi-token-123');
       expect(data.aqi).toBe(388);
     });
   });

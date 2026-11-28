@@ -1,5 +1,3 @@
-import { UserProfile } from './persona';
-
 export interface OutdoorTimeWindow {
   window: string; // e.g. "12:30 PM - 03:30 PM"
   advice: string;
