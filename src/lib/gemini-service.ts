@@ -134,7 +134,7 @@ function buildVerifiedSnapshot(aqiData: StationAqiData): VerifiedAqiSnapshot {
 
 function resolveThreatLevel(aqi: number): AssistantAdvice['threatLevel'] {
   if (aqi > 300) return 'hazardous';
-  if (aqi > 100) return 'severe';
+  if (aqi > 150) return 'severe';
   if (aqi > 50) return 'moderate';
   return 'low';
 }
@@ -142,34 +142,52 @@ function resolveThreatLevel(aqi: number): AssistantAdvice['threatLevel'] {
 function buildCommuteGuidance(
   persona: UserProfile,
   transit: { name: string; transitMode: string },
-  isSevere: boolean
+  isSevere: boolean,
+  isPoor: boolean
 ): Pillar1LowEmissionRoutines {
   let commuteModeRecommendation = `Combine errands and shift to electric public transit or ${transit.name}.`;
-  let commuteDepartureStrategy =
-    'Avoid peak surface inversion hours (06:00 AM - 09:00 AM and 07:00 PM - 10:00 PM).';
+  let commuteDepartureStrategy = isPoor
+    ? 'Avoid peak surface inversion hours (06:00 AM - 09:00 AM and 07:00 PM - 10:00 PM).'
+    : 'Normal commute hours are safe; prioritize public transit or EV feeders to keep corridor emissions low.';
 
   if (persona.id === 'commuter') {
     commuteModeRecommendation = isSevere
       ? `Divert completely from 2-wheeler/bike to ${transit.name}. If car commute is mandatory, ensure cabin air recirculation (AC Recirculation ON) with an active carbon PM2.5 cabin filter and wear a certified N95/FFP2 mask.`
-      : `Prioritize ${transit.name} or electric feeder buses over personal motorized two-wheelers.`;
+      : isPoor
+        ? `Prioritize ${transit.name} or electric feeder buses over personal motorized two-wheelers; keep an N95 mask handy in heavy traffic.`
+        : `Prioritize ${transit.name} or electric feeder buses to reduce personal carbon footprint during daily commutes.`;
     commuteDepartureStrategy = isSevere
       ? 'Negotiate staggered work hours: depart after 10:30 AM and return prior to 6:00 PM to circumvent dense vehicular fume accumulation during temperature inversion.'
-      : 'Normal commute timing with N95 masking during peak traffic corridors.';
+      : isPoor
+        ? 'Shift departure slightly past early morning rush-hour peaks when possible and wear N95 masking along congested arterial roads.'
+        : 'Standard work commute schedule is safe under current air quality conditions.';
   } else if (persona.id === 'senior') {
-    commuteModeRecommendation =
-      'Strictly suspend all non-essential road travel. For medical appointments, use closed, air-conditioned transit.';
-    commuteDepartureStrategy =
-      'Cancel habitual 6:00 AM morning park walk. Replace with indoor hallway walking or shift outdoor exposure to the warmest sunlit window between 1:00 PM and 3:30 PM.';
+    commuteModeRecommendation = isSevere
+      ? 'Strictly suspend all non-essential road travel. For medical appointments, use closed, air-conditioned transit.'
+      : isPoor
+        ? `Avoid open-air road travel during rush hour; use closed ${transit.name} or AC transit with a well-fitted mask for errands.`
+        : `Short local trips via ${transit.name} or shaded neighborhood walkways are safe.`;
+    commuteDepartureStrategy = isSevere || isPoor
+      ? 'Cancel habitual 6:00 AM morning park walk. Replace with indoor hallway walking or shift outdoor exposure to the warmest sunlit window between 11:30 AM and 3:30 PM.'
+      : 'Morning and afternoon walks are safe; carry drinking water and avoid busy roadside junctions.';
   } else if (persona.id === 'athlete') {
-    commuteModeRecommendation =
-      'Travel to school/practice in closed transit wearing a snug-fit N95 mask to prevent particulate loading before cardiovascular exertion.';
-    commuteDepartureStrategy =
-      'Reschedule high-cardiovascular training indoors. Outdoor aerobic drills at 4:00 PM during severe AQI cause deep alveolar penetration of PM2.5, causing exercise-induced bronchospasm.';
+    commuteModeRecommendation = isPoor
+      ? 'Travel to school/practice in closed transit wearing a snug-fit N95 mask to prevent particulate loading before cardiovascular exertion.'
+      : `Use ${transit.name} or shared electric transit for travel to training venues.`;
+    commuteDepartureStrategy = isSevere
+      ? 'Reschedule all high-cardiovascular training indoors. Outdoor aerobic drills at 4:00 PM during severe AQI cause deep alveolar penetration of PM2.5, causing exercise-induced bronchospasm.'
+      : isPoor
+        ? 'Move high-intensity interval drills indoors or reduce outdoor exertion intensity; prioritize hydrated recovery.'
+        : 'Scheduled 4:00 PM outdoor sports practice is safe; maintain normal hydration and avoid idling vehicle zones.';
   } else if (persona.id === 'parent') {
-    commuteModeRecommendation =
-      'Keep toddler inside filtered residential/daycare zones. Avoid stroller outings on roads with idling traffic.';
-    commuteDepartureStrategy =
-      'Cancel late evening park visits (after 5:30 PM) when ground-level temperature rapidly cools and smog descends.';
+    commuteModeRecommendation = isSevere
+      ? 'Keep toddler inside filtered residential/daycare zones. Avoid stroller outings on roads with idling traffic.'
+      : isPoor
+        ? 'Avoid roadside stroller walks during traffic peaks; use parks away from arterial roads during mid-day dispersion hours.'
+        : 'Normal outdoor stroller and neighborhood transit routines are safe away from direct vehicle exhaust.';
+    commuteDepartureStrategy = isSevere || isPoor
+      ? 'Cancel late evening park visits (after 5:30 PM) when ground-level temperature rapidly cools and smog descends.'
+      : 'Afternoon park play is safe; monitor hourly station updates before evening outings.';
   }
 
   return {
@@ -178,46 +196,66 @@ function buildCommuteGuidance(
     safeOutdoorTimeWindows: [
       {
         window: '06:00 AM - 10:00 AM',
-        advice:
-          'Dangerous: Nocturnal temperature inversion traps toxic ground-level particulates. Avoid outdoor activities.',
-        riskLevel: 'danger',
+        advice: isPoor
+          ? 'Caution/Danger: Early morning temperature inversion traps ground-level particulates. Delay outdoor exertion.'
+          : 'Safe/Moderate: Light outdoor movement is acceptable; prefer parks away from dense traffic.',
+        riskLevel: isSevere ? 'danger' : isPoor ? 'caution' : 'safe',
       },
       {
         window: '12:30 PM - 03:30 PM',
         advice:
-          'Cautionary Window: Solar warming expands the boundary layer, offering the lowest particulate concentration of the day.',
+          'Optimal Window: Solar warming expands the boundary layer, offering the lowest particulate concentration of the day.',
         riskLevel: isSevere ? 'caution' : 'safe',
       },
       {
         window: '06:30 PM - 10:00 PM',
-        advice:
-          'High Risk: Rapid radiational cooling compresses the atmospheric boundary layer, causing vehicular smog stagnation.',
-        riskLevel: 'danger',
+        advice: isPoor
+          ? 'High Risk: Radiational cooling compresses the boundary layer, increasing roadside exhaust accumulation.'
+          : 'Moderate: Evening air remains acceptable for routine movement; avoid idling traffic junctions.',
+        riskLevel: isSevere ? 'danger' : isPoor ? 'caution' : 'safe',
       },
     ],
     tripConsolidationTips: [
       'Batch all external tasks into a single mid-day window rather than multiple round trips.',
       'Coordinate neighborhood carpooling or switch the last-mile segment to shared electric auto-rickshaws.',
     ],
-    inversionWarning:
-      'Winter nocturnal radiation inversion traps vehicular exhaust in the lowest 50-100 meters of the atmosphere. Delay outdoor movement until solar radiation breaks the inversion layer (after 10:30 AM).',
+    inversionWarning: isPoor
+      ? 'Nocturnal radiation inversion traps vehicular exhaust in the lowest 50-100 meters of the atmosphere. Delay outdoor movement until solar radiation breaks the inversion layer (after 10:30 AM).'
+      : 'At current AQI levels, diurnal inversion buildup is mild, though busy traffic intersections still exhibit localized PM2.5 spikes during rush hours.',
   };
 }
 
-function buildIndoorGuidance(aqi: number, pm25: number, isSevere: boolean): Pillar2IndoorAirQuality {
+function buildIndoorGuidance(
+  aqi: number,
+  pm25: number,
+  isSevere: boolean,
+  isPoor: boolean
+): Pillar2IndoorAirQuality {
   return {
     purifierSchedule: {
       recommendedHours: isSevere
         ? 'Continuous 24/7 HEPA operation on AUTO/HIGH mode in occupied living zones and bedrooms.'
-        : 'Run on MEDIUM during morning/evening hours; sleep mode at night.',
-      operatingMode: isSevere ? 'HEPA Level 3 / Turbo in bedrooms 1 hour before sleep' : 'Auto Eco-Sensing Mode',
-      rationale: `At AQI ${aqi} (PM2.5: ${pm25} µg/m³), indoor infiltration reaches 60-70% of outdoor concentration without active mechanical HEPA filtration.`,
+        : isPoor
+          ? 'Run on MEDIUM/AUTO during morning & evening peaks and overnight in bedrooms.'
+          : 'Optional Eco-Auto filtration during high-traffic evening hours or dusty chores.',
+      operatingMode: isSevere
+        ? 'HEPA Level 3 / Turbo in bedrooms 1 hour before sleep'
+        : isPoor
+          ? 'Auto / Medium Filtration Mode'
+          : 'Eco / Low-Power Monitoring Mode',
+      rationale: `At AQI ${aqi} (PM2.5: ${pm25} µg/m³), active HEPA filtration keeps indoor particulate exposure well below ambient outdoor levels.`,
     },
     ventilationWindows: {
-      optimalWindow: isSevere ? '1:00 PM - 2:30 PM (Strictly limited to 15-20 minutes)' : '11:30 AM - 3:30 PM',
+      optimalWindow: isSevere
+        ? '1:00 PM - 2:30 PM (Strictly limited to 15-20 minutes)'
+        : isPoor
+          ? '11:30 AM - 3:30 PM'
+          : 'Morning & Mid-Day Natural Cross-Ventilation',
       instructions: isSevere
         ? 'Keep all perimeter windows hermetically latched during early morning and late evening. Allow a brief 15-minute cross-ventilation window between 1:00 PM - 2:00 PM when solar heating maximizes thermal boundary mixing, then immediately seal and run purifier on turbo.'
-        : 'Moderate cross-ventilation permitted during warm mid-day hours when ambient PM2.5 disperses vertically.',
+        : isPoor
+          ? 'Moderate cross-ventilation permitted during warm mid-day hours when ambient PM2.5 disperses vertically.'
+          : 'Normal natural cross-ventilation is safe throughout the day to keep indoor CO2 low.',
       warningNotice: isSevere
         ? 'Never ventilate before 11:00 AM or after 5:30 PM due to active atmospheric boundary layer trapping.'
         : undefined,
@@ -345,8 +383,7 @@ export function generateDeterministicAdvice(
 ): AssistantAdvice {
   const { aqi, pollutants, station } = aqiData;
   const pm25 = pollutants.pm25 ?? Math.round(aqi * 0.7);
-  const pm10 = pollutants.pm10 ?? Math.round(aqi * 1.1);
-  const transit = resolveCityTransit(station.city || '');
+  const transit = resolveCityTransit(`${station.city || ''} ${station.name || ''} ${station.state || ''}`);
   const cityName = station.city && station.city.trim() ? station.city : 'your area';
   const isSevere = aqi > 300;
   const isPoor = aqi > 100;
@@ -361,8 +398,8 @@ export function generateDeterministicAdvice(
       age: persona.age,
       sensitivityLevel: persona.sensitivityLevel,
     },
-    pillar1_lowEmissionRoutines: buildCommuteGuidance(persona, transit, isSevere),
-    pillar2_indoorAirQuality: buildIndoorGuidance(aqi, pm25, isSevere),
+    pillar1_lowEmissionRoutines: buildCommuteGuidance(persona, transit, isSevere, isPoor),
+    pillar2_indoorAirQuality: buildIndoorGuidance(aqi, pm25, isSevere, isPoor),
     pillar3_sustainableAlternatives: buildSustainableAlternatives(persona, transit),
     metadata: {
       modelUsed: 'Rule-Engine Fallback (Deterministic CPCB Guidelines)',
@@ -464,7 +501,9 @@ export async function getAssistantAdvice(
     return generateDeterministicAdvice(aqiData, persona);
   }
 
-  const transit = resolveCityTransit(aqiData.station.city || '');
+  const transit = resolveCityTransit(
+    `${aqiData.station.city || ''} ${aqiData.station.name || ''} ${aqiData.station.state || ''}`
+  );
   const activeCity =
     aqiData.station.city && aqiData.station.city.trim() ? aqiData.station.city : 'Indian Metropolitan City';
 

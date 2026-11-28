@@ -6,7 +6,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.0%20Flash-8E75C2?style=for-the-badge&logo=google)](https://ai.google.dev/)
 [![Live App](https://img.shields.io/badge/Live%20App-urban--ai--assist.vercel.app-00DC82?style=for-the-badge&logo=vercel)](https://urban-ai-assist.vercel.app/)
-[![Tests Passing](https://img.shields.io/badge/Vitest-35%20Passing-success?style=for-the-badge&logo=vitest)](https://vitest.dev/)
+[![Tests Passing](https://img.shields.io/badge/Vitest-37%20Passing-success?style=for-the-badge&logo=vitest)](https://vitest.dev/)
 [![ESLint](https://img.shields.io/badge/ESLint-Strict%20Clean-4B32C3?style=for-the-badge&logo=eslint)](https://eslint.org/)
 
 ---
@@ -142,7 +142,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 Execute the automated test suite and type verification:
 
 ```bash
-# Run all 35 automated Vitest unit tests
+# Run all 37 automated Vitest unit tests
 npm test
 
 # Run TypeScript type check
@@ -160,12 +160,12 @@ npm run build
  ✓ src/__tests__/aqi-route.test.ts (5 tests)
  ✓ src/__tests__/assistant-route.test.ts (3 tests)
  ✓ src/__tests__/gemini-service.test.ts (6 tests)
- ✓ src/__tests__/aqi-service.test.ts (12 tests)
+ ✓ src/__tests__/aqi-service.test.ts (14 tests)
  ✓ src/__tests__/smoke.test.tsx (1 test)
  ✓ src/__tests__/ui-components.test.tsx (8 tests)
 
  Test Files  6 passed (6)
-      Tests  35 passed (35)
+      Tests  37 passed (37)
    Coverage  High (Domain models, API routes, clinical fallback, UI components)
 ```
 

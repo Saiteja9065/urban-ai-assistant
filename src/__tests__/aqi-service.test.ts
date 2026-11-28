@@ -71,7 +71,11 @@ describe('AQI Service & Constants (Milestone 2)', () => {
       expect(DEFAULT_STATION_DATA.provenance.fallbackReason).toBe(originalReason);
     });
 
-    it('supports geo coordinate and custom city fallbacks', () => {
+    it('uses regional baseline instead of Delhi 388 for known regional neighborhoods like Madhapur', () => {
+      const madhapurFallback = getFallbackData('madhapur');
+      expect(madhapurFallback.station.city).toBe('Hyderabad');
+      expect(madhapurFallback.aqi).toBe(146);
+
       const geoFallback = getFallbackData('geo:17.4400;78.3480');
       expect(geoFallback.station.coordinates).toEqual([17.44, 78.348]);
       expect(geoFallback.station.name).toContain('17.44°N');
@@ -120,14 +124,36 @@ describe('AQI Service & Constants (Milestone 2)', () => {
       };
 
       const result = parseWaqiResponse(mockWaqiJson);
-      expect(result.aqi).toBe(312);
+      expect(result.aqi).toBe(390);
+      expect(result.dominantPollutant).toBe('pm10');
       expect(result.category.category).toBe('severe');
-      expect(result.dominantPollutant).toBe('pm25');
       expect(result.pollutants.pm25).toBe(280);
       expect(result.pollutants.pm10).toBe(390);
       expect(result.weather?.temperature).toBe(18.5);
       expect(result.provenance.isLive).toBe(true);
       expect(result.provenance.stationName).toBe('Anand Vihar, Delhi, India');
+    });
+
+    it('corrects anomalous low WAQI gas-only AQI when PM2.5/PM10 sub-indices are higher', () => {
+      const anomalousPayload: WaqiApiResponse = {
+        status: 'ok',
+        data: {
+          aqi: 10,
+          idx: 999,
+          dominentpol: 'co',
+          iaqi: {
+            pm25: { v: 104 },
+            pm10: { v: 54 },
+            co: { v: 10 },
+          },
+          time: { iso: new Date().toISOString() },
+        },
+      };
+
+      const result = parseWaqiResponse(anomalousPayload);
+      expect(result.aqi).toBe(104);
+      expect(result.dominantPollutant).toBe('pm25');
+      expect(result.category.category).toBe('poor');
     });
 
     it('throws error on non-ok status', () => {
@@ -153,7 +179,7 @@ describe('AQI Service & Constants (Milestone 2)', () => {
       expect(data.aqi).toBe(388);
     });
 
-    it('fetches live data when token is provided and network succeeds', async () => {
+    it('fetches live data when token is provided and WAQI timestamp is fresh', async () => {
       process.env.WAQI_API_TOKEN = 'test-token-valid';
 
       const mockFetchResponse = {
@@ -166,7 +192,7 @@ describe('AQI Service & Constants (Milestone 2)', () => {
             city: { name: 'ITO, Delhi', geo: [28.628, 77.241] },
             dominentpol: 'pm25',
             iaqi: { pm25: { v: 240 } },
-            time: { iso: '2026-11-22T10:00:00+05:30' },
+            time: { iso: new Date().toISOString() },
           },
         }),
       };
@@ -177,6 +203,54 @@ describe('AQI Service & Constants (Milestone 2)', () => {
       expect(data.aqi).toBe(295);
       expect(data.provenance.isLive).toBe(true);
       expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('refreshes stale WAQI feeds (>24h old) with live Open-Meteo Air Quality readings', async () => {
+      process.env.WAQI_API_TOKEN = 'test-token-valid';
+
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (url.includes('api.waqi.info')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              status: 'ok',
+              data: {
+                aqi: 10,
+                idx: 1122,
+                city: { name: 'Central University, Hyderabad', geo: [17.44, 78.348] },
+                dominentpol: 'co',
+                iaqi: { pm25: { v: 104 }, co: { v: 10 } },
+                time: { iso: '2026-11-20T11:00:00+05:30' },
+              },
+            }),
+          });
+        }
+        if (url.includes('air-quality-api.open-meteo.com')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              current: {
+                time: '2026-11-28T11:30',
+                us_aqi: 113,
+                pm2_5: 36.7,
+                pm10: 38.2,
+              },
+            }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            current: { temperature_2m: 26.8, relative_humidity_2m: 53 },
+          }),
+        });
+      });
+
+      const data = await getLiveAqi('hyderabad-gachibowli');
+      expect(data.aqi).toBe(113);
+      expect(data.provenance.isLive).toBe(true);
+      expect(data.provenance.source).toContain('Open-Meteo');
+      expect(data.weather?.temperature).toBe(26.8);
     });
 
     it('falls back gracefully and redacts API tokens if fetch throws', async () => {
